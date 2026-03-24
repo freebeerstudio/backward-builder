@@ -232,7 +232,7 @@ export function HeroChatBox() {
       <div className="w-full">
         {/* --- The Chat Box --- */}
         <div
-          className="animate-hero-box mx-auto w-full max-w-3xl rounded-2xl border border-ruled bg-paper shadow-[0_2px_24px_rgba(27,42,74,0.08),0_0_0_1px_rgba(27,42,74,0.03)]"
+          className="animate-hero-box mx-auto w-full max-w-3xl rounded-2xl border border-ruled bg-paper shadow-[0_2px_24px_rgba(27,42,74,0.08),0_0_0_1px_rgba(27,42,74,0.03)] focus-within:border-ink/20 transition-colors"
           role="form"
           aria-label="Unit plan builder"
         >
@@ -264,7 +264,7 @@ export function HeroChatBox() {
               onChange={(e) => setGrade(e.target.value)}
               disabled={isLoading}
               aria-label="Grade level"
-              className="focus-ring h-8 appearance-none rounded-md bg-transparent px-1 font-ui text-xs font-medium text-pencil transition hover:text-graphite focus:text-graphite disabled:opacity-50 sm:text-sm cursor-pointer"
+              className="h-8 appearance-none rounded-md bg-transparent px-1 font-ui text-xs font-medium text-pencil underline-offset-4 decoration-ruled transition hover:text-graphite hover:underline focus:text-graphite focus:underline focus:outline-none disabled:opacity-50 sm:text-sm cursor-pointer"
             >
               <option value="">Grade</option>
               {GRADES.map((g) => (
@@ -280,7 +280,7 @@ export function HeroChatBox() {
               onChange={(e) => setSubject(e.target.value)}
               disabled={isLoading}
               aria-label="Subject area"
-              className="focus-ring h-8 appearance-none rounded-md bg-transparent px-1 font-ui text-xs font-medium text-pencil transition hover:text-graphite focus:text-graphite disabled:opacity-50 sm:text-sm cursor-pointer"
+              className="h-8 appearance-none rounded-md bg-transparent px-1 font-ui text-xs font-medium text-pencil underline-offset-4 decoration-ruled transition hover:text-graphite hover:underline focus:text-graphite focus:underline focus:outline-none disabled:opacity-50 sm:text-sm cursor-pointer"
             >
               <option value="">Subject</option>
               {SUBJECTS.map((s) => (
@@ -296,7 +296,7 @@ export function HeroChatBox() {
               onChange={(e) => setState(e.target.value)}
               disabled={isLoading}
               aria-label="State standards"
-              className="focus-ring h-8 appearance-none rounded-md bg-transparent px-1 font-ui text-xs font-medium text-pencil transition hover:text-graphite focus:text-graphite disabled:opacity-50 sm:text-sm cursor-pointer"
+              className="h-8 appearance-none rounded-md bg-transparent px-1 font-ui text-xs font-medium text-pencil underline-offset-4 decoration-ruled transition hover:text-graphite hover:underline focus:text-graphite focus:underline focus:outline-none disabled:opacity-50 sm:text-sm cursor-pointer"
             >
               <option value="">State</option>
               {STATES.map((s) => (
