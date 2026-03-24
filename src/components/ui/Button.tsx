@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { forwardRef, type ButtonHTMLAttributes } from 'react';
+import { forwardRef, type ButtonHTMLAttributes } from "react";
 
-type ButtonVariant = 'primary' | 'secondary' | 'accent' | 'ghost';
-type ButtonSize = 'sm' | 'md' | 'lg';
+type ButtonVariant = "primary" | "secondary" | "accent" | "ghost";
+type ButtonSize = "sm" | "md" | "lg";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
@@ -12,32 +12,38 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   fullWidth?: boolean;
 }
 
+/**
+ * Button — academic editorial design system.
+ *
+ * Uses ink (dark navy), burgundy, and amber from the landing page palette.
+ * Rounded-lg, font-ui (Plus Jakarta Sans), focus-ring for accessibility.
+ */
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    'bg-forest text-white hover:bg-forest-light active:bg-forest-dark disabled:bg-forest/50',
+    "bg-ink text-white hover:bg-ink-light active:bg-graphite disabled:bg-ink/40 disabled:text-white/60",
   secondary:
-    'bg-white text-forest border border-forest hover:bg-forest hover:text-white disabled:opacity-50',
+    "bg-paper text-ink border border-ruled hover:border-ink-muted hover:bg-chalk disabled:opacity-50",
   accent:
-    'bg-gold text-forest-dark hover:bg-gold-light active:bg-gold disabled:opacity-50',
+    "bg-amber text-white hover:bg-amber/90 active:bg-amber disabled:opacity-50",
   ghost:
-    'bg-transparent text-forest hover:bg-forest/5 disabled:opacity-50',
+    "bg-transparent text-ink hover:bg-chalk disabled:opacity-50",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: 'px-3 py-1.5 text-sm',
-  md: 'px-5 py-2.5 text-base',
-  lg: 'px-7 py-3.5 text-lg',
+  sm: "px-3 py-1.5 text-sm",
+  md: "px-5 py-2.5 text-sm",
+  lg: "px-7 py-3 text-base",
 };
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
-      variant = 'primary',
-      size = 'md',
+      variant = "primary",
+      size = "md",
       loading = false,
       fullWidth = false,
       disabled,
-      className = '',
+      className = "",
       children,
       ...props
     },
@@ -48,13 +54,13 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={disabled || loading}
         className={`
-          inline-flex items-center justify-center gap-2
-          rounded-lg font-heading font-medium
+          focus-ring inline-flex items-center justify-center gap-2
+          rounded-lg font-ui font-semibold
           transition-all duration-200 ease-in-out
           cursor-pointer disabled:cursor-not-allowed
           ${variantClasses[variant]}
           ${sizeClasses[size]}
-          ${fullWidth ? 'w-full' : ''}
+          ${fullWidth ? "w-full" : ""}
           ${className}
         `}
         {...props}
@@ -86,6 +92,6 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   },
 );
 
-Button.displayName = 'Button';
+Button.displayName = "Button";
 
 export { Button, type ButtonProps, type ButtonVariant, type ButtonSize };

@@ -9,7 +9,6 @@ import {
 } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { Header } from "@/components/layout/Header";
-import { PageContainer } from "@/components/layout/PageContainer";
 import { UbDProgressIndicator } from "@/components/unit/UbDProgressIndicator";
 import { UnitOverview } from "@/components/unit/UnitOverview";
 import type { CognitiveLevel } from "@/types";
@@ -31,6 +30,12 @@ export async function generateMetadata({ params }: UnitPageProps): Promise<Metad
   };
 }
 
+/**
+ * Unit overview page — the 3-stage UbD dashboard.
+ *
+ * Uses the academic editorial aesthetic: cream background, paper-white
+ * cards, ink navy typography, ruled borders. Matches the landing page.
+ */
 export default async function UnitPage({ params }: UnitPageProps) {
   const { id } = await params;
 
@@ -86,12 +91,12 @@ export default async function UnitPage({ params }: UnitPageProps) {
   };
 
   return (
-    <>
+    <div className="min-h-screen bg-cream font-ui">
       <Header />
-      <main className="flex-1 py-8">
-        <PageContainer>
+      <main className="flex-1 py-8 sm:py-12">
+        <div className="mx-auto w-full max-w-3xl px-4 sm:px-6">
           {/* Progress indicator */}
-          <div className="mb-8">
+          <div className="mb-8 sm:mb-10">
             <UbDProgressIndicator
               currentStage={currentStage}
               completedStages={completedStages}
@@ -105,8 +110,8 @@ export default async function UnitPage({ params }: UnitPageProps) {
             hasChecks={hasChecks}
             hasActivities={hasActivities}
           />
-        </PageContainer>
+        </div>
       </main>
-    </>
+    </div>
   );
 }

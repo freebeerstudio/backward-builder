@@ -4,13 +4,19 @@ interface CardProps {
   className?: string;
 }
 
-function Card({ children, hover = false, className = '' }: CardProps) {
+/**
+ * Card — academic editorial design system.
+ *
+ * Paper-white background with subtle ruled border and soft shadow.
+ * Matches the landing page's card-lift style on hover.
+ */
+function Card({ children, hover = false, className = "" }: CardProps) {
   return (
     <div
       className={`
-        bg-card rounded-lg p-6
-        shadow-[0_1px_3px_rgba(0,0,0,0.08)]
-        ${hover ? 'transition-shadow duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)]' : ''}
+        rounded-xl border border-ruled bg-paper p-6
+        shadow-[0_1px_3px_rgba(27,42,74,0.06)]
+        ${hover ? "card-lift transition-shadow duration-200" : ""}
         ${className}
       `}
     >

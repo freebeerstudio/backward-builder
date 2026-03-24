@@ -33,33 +33,75 @@ const COGNITIVE_LEVEL_LABELS: Record<CognitiveLevel, string> = {
   create: "Create",
 };
 
+/**
+ * Cognitive level badge colors — academic editorial palette.
+ * Uses muted tones that feel scholarly, not SaaS-neon.
+ */
 const COGNITIVE_LEVEL_COLORS: Record<CognitiveLevel, string> = {
-  remember: "bg-gray-100 text-gray-700",
-  understand: "bg-blue-100 text-blue-700",
-  apply: "bg-green-100 text-green-700",
-  analyze: "bg-purple-100 text-purple-700",
-  evaluate: "bg-orange-100 text-orange-700",
-  create: "bg-red-100 text-red-700",
+  remember: "bg-chalk text-pencil border border-ruled",
+  understand: "bg-ink/5 text-ink border border-ink/15",
+  apply: "bg-emerald-50 text-emerald-800 border border-emerald-200",
+  analyze: "bg-violet-50 text-violet-800 border border-violet-200",
+  evaluate: "bg-amber/10 text-amber border border-amber/20",
+  create: "bg-burgundy/10 text-burgundy border border-burgundy/20",
 };
 
+/** Checkmark icon reused across stages */
+function CheckIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2.5}
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+    </svg>
+  );
+}
+
+/** Stage number circle — filled for complete, outlined for pending */
+function StageCircle({
+  number,
+  isComplete,
+}: {
+  number: number;
+  isComplete: boolean;
+}) {
+  return (
+    <div
+      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-ui font-semibold ${
+        isComplete
+          ? "bg-ink text-white"
+          : "border-2 border-ruled bg-paper text-pencil"
+      }`}
+    >
+      {isComplete ? <CheckIcon /> : number}
+    </div>
+  );
+}
+
+/**
+ * UnitOverview — the 3-stage dashboard for a unit.
+ *
+ * Academic editorial design: ink navy headers, paper-white cards with
+ * ruled borders, serif display font for the title, clean typography.
+ */
 function UnitOverview({ unit, hasTasks, hasChecks, hasActivities }: UnitOverviewProps) {
   const router = useRouter();
 
-  const completedStages: number[] = [1]; // Stage 1 always done if we're here
-  if (hasTasks && hasChecks) completedStages.push(2);
-  if (hasActivities) completedStages.push(3);
-
   return (
     <div className="space-y-6">
-      {/* Unit Header */}
+      {/* ---- Unit Header ---- */}
       <div>
         <div className="flex flex-wrap items-center gap-3 mb-2">
-          <h1 className="text-2xl md:text-3xl font-heading font-bold text-forest">
+          <h1 className="font-display text-2xl text-ink md:text-3xl">
             {unit.title}
           </h1>
           {unit.cognitiveLevel && (
             <span
-              className={`rounded-full px-3 py-1 text-xs font-semibold font-heading ${
+              className={`rounded-full px-3 py-1 text-[11px] font-ui font-semibold ${
                 COGNITIVE_LEVEL_COLORS[unit.cognitiveLevel]
               }`}
             >
@@ -67,41 +109,31 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities }: UnitOverview
             </span>
           )}
         </div>
-        <p className="text-text-light font-body text-sm md:text-base">
+        <p className="font-ui text-sm text-pencil leading-relaxed md:text-base">
           {unit.enduringUnderstanding}
         </p>
       </div>
 
-      {/* Stage 1: Desired Results (always complete) */}
+      {/* ---- Stage 1: Desired Results (always complete) ---- */}
       <Card hover>
-        <div className="flex items-center gap-3 mb-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-forest text-white">
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2.5}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <h2 className="text-lg font-heading font-semibold text-forest">
+        <div className="flex items-center gap-3 mb-5">
+          <StageCircle number={1} isComplete />
+          <h2 className="font-display text-lg text-ink">
             Stage 1: Desired Results
           </h2>
         </div>
 
         {/* Standards */}
         {unit.standardCodes && unit.standardCodes.length > 0 && (
-          <div className="mb-4">
-            <p className="text-xs font-heading font-semibold text-text-light uppercase tracking-wide mb-2">
+          <div className="mb-5">
+            <p className="text-[11px] font-ui font-bold uppercase tracking-wider text-ink/50 mb-2">
               Aligned Standards
             </p>
             <div className="flex flex-wrap gap-2">
               {unit.standardCodes.map((code, i) => (
                 <span
                   key={code}
-                  className="rounded bg-forest/10 px-2 py-1 text-xs font-mono font-semibold text-forest"
+                  className="rounded-md border border-ruled bg-chalk px-2.5 py-1 font-mono text-xs font-semibold text-graphite"
                   title={unit.standardDescriptions?.[i] || ""}
                 >
                   {code}
@@ -113,11 +145,11 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities }: UnitOverview
 
         {/* Cognitive Level */}
         {unit.cognitiveLevelExplanation && (
-          <div className="mb-4">
-            <p className="text-xs font-heading font-semibold text-text-light uppercase tracking-wide mb-1">
+          <div className="mb-5">
+            <p className="text-[11px] font-ui font-bold uppercase tracking-wider text-ink/50 mb-1.5">
               Cognitive Level
             </p>
-            <p className="text-sm text-text font-body">
+            <p className="font-ui text-sm text-graphite leading-relaxed">
               {unit.cognitiveLevelExplanation}
             </p>
           </div>
@@ -126,16 +158,16 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities }: UnitOverview
         {/* Essential Questions */}
         {unit.essentialQuestions && unit.essentialQuestions.length > 0 && (
           <div>
-            <p className="text-xs font-heading font-semibold text-text-light uppercase tracking-wide mb-2">
+            <p className="text-[11px] font-ui font-bold uppercase tracking-wider text-ink/50 mb-2.5">
               Essential Questions
             </p>
-            <ul className="space-y-1.5">
+            <ul className="space-y-2">
               {unit.essentialQuestions.map((q, i) => (
-                <li key={i} className="flex gap-2 text-sm text-text font-body">
-                  <span className="shrink-0 font-heading font-bold text-forest">
+                <li key={i} className="flex gap-2 font-ui text-sm text-graphite">
+                  <span className="shrink-0 font-semibold text-ink">
                     Q{i + 1}.
                   </span>
-                  <span className="italic">{q}</span>
+                  <span className="italic leading-relaxed">{q}</span>
                 </li>
               ))}
             </ul>
@@ -143,55 +175,27 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities }: UnitOverview
         )}
       </Card>
 
-      {/* Stage 2: Evidence */}
+      {/* ---- Stage 2: Evidence ---- */}
       <Card hover>
-        <div className="flex items-center gap-3 mb-4">
-          <div
-            className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-heading font-semibold ${
-              hasTasks && hasChecks
-                ? "bg-forest text-white"
-                : "border-2 border-border bg-white text-text-light"
-            }`}
-          >
-            {hasTasks && hasChecks ? (
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2.5}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-            ) : (
-              "2"
-            )}
-          </div>
-          <h2 className="text-lg font-heading font-semibold text-forest">
+        <div className="flex items-center gap-3 mb-5">
+          <StageCircle number={2} isComplete={hasTasks && hasChecks} />
+          <h2 className="font-display text-lg text-ink">
             Stage 2: Evidence
           </h2>
         </div>
 
         {hasTasks || hasChecks ? (
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {hasTasks && (
               <div className="flex items-center gap-2">
-                <svg className="h-4 w-4 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-sm font-body text-text">Performance tasks generated</span>
+                <CheckIcon className="h-4 w-4 text-emerald-600" />
+                <span className="font-ui text-sm text-graphite">Performance tasks generated</span>
               </div>
             )}
             {hasChecks && (
               <div className="flex items-center gap-2">
-                <svg className="h-4 w-4 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-sm font-body text-text">Checks for understanding generated</span>
+                <CheckIcon className="h-4 w-4 text-emerald-600" />
+                <span className="font-ui text-sm text-graphite">Checks for understanding generated</span>
               </div>
             )}
             <div className="pt-2">
@@ -200,13 +204,13 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities }: UnitOverview
                 size="sm"
                 onClick={() => router.push(`/unit/${unit.id}/stage2`)}
               >
-                View & Edit Stage 2
+                View &amp; Edit Stage 2
               </Button>
             </div>
           </div>
         ) : (
           <div>
-            <p className="text-sm text-text-light font-body mb-4">
+            <p className="font-ui text-sm text-pencil leading-relaxed mb-4">
               Generate performance tasks and formative checks that measure whether
               students have achieved the desired results.
             </p>
@@ -221,46 +225,20 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities }: UnitOverview
         )}
       </Card>
 
-      {/* Stage 3: Learning Plan */}
+      {/* ---- Stage 3: Learning Plan ---- */}
       <Card hover>
-        <div className="flex items-center gap-3 mb-4">
-          <div
-            className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-heading font-semibold ${
-              hasActivities
-                ? "bg-forest text-white"
-                : "border-2 border-border bg-white text-text-light"
-            }`}
-          >
-            {hasActivities ? (
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2.5}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-            ) : (
-              "3"
-            )}
-          </div>
-          <h2 className="text-lg font-heading font-semibold text-forest">
+        <div className="flex items-center gap-3 mb-5">
+          <StageCircle number={3} isComplete={hasActivities} />
+          <h2 className="font-display text-lg text-ink">
             Stage 3: Learning Plan
           </h2>
         </div>
 
         {hasActivities ? (
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             <div className="flex items-center gap-2">
-              <svg className="h-4 w-4 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-              <span className="text-sm font-body text-text">Learning activities generated</span>
+              <CheckIcon className="h-4 w-4 text-emerald-600" />
+              <span className="font-ui text-sm text-graphite">Learning activities generated</span>
             </div>
             <div className="pt-2">
               <Button
@@ -268,13 +246,13 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities }: UnitOverview
                 size="sm"
                 onClick={() => router.push(`/unit/${unit.id}/stage3`)}
               >
-                View & Edit Stage 3
+                View &amp; Edit Stage 3
               </Button>
             </div>
           </div>
         ) : (
           <div>
-            <p className="text-sm text-text-light font-body mb-4">
+            <p className="font-ui text-sm text-pencil leading-relaxed mb-4">
               Design scaffolded learning activities that build student capacity toward
               the performance task — planned last because every activity serves the
               assessments.
@@ -288,7 +266,7 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities }: UnitOverview
               Generate Learning Plan
             </Button>
             {(!hasTasks || !hasChecks) && (
-              <p className="text-xs text-text-light font-body mt-2">
+              <p className="font-ui text-xs text-pencil mt-2">
                 Complete Stage 2 first — in backward design, activities are planned after assessments.
               </p>
             )}

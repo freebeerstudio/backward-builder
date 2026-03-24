@@ -11,7 +11,9 @@ const stages = [
 
 /**
  * Visual progress indicator for the 3 UbD stages.
- * Shows connected circles with labels. Works as a server or client component.
+ *
+ * Academic editorial palette: ink navy for completed/current, ruled
+ * borders for future stages. Matches the landing page aesthetic.
  */
 function UbDProgressIndicator({
   currentStage,
@@ -33,8 +35,8 @@ function UbDProgressIndicator({
                 <div
                   className={`h-0.5 w-12 md:w-20 ${
                     isCompleted || isCurrent
-                      ? "bg-forest"
-                      : "bg-border"
+                      ? "bg-ink"
+                      : "bg-ruled"
                   }`}
                 />
               )}
@@ -44,13 +46,13 @@ function UbDProgressIndicator({
                 <div
                   className={`
                     flex h-10 w-10 items-center justify-center rounded-full
-                    text-sm font-heading font-semibold transition-all duration-300
+                    text-sm font-ui font-semibold transition-all duration-300
                     ${
                       isCompleted
-                        ? "bg-forest text-white"
+                        ? "bg-ink text-white"
                         : isCurrent
-                        ? "bg-forest text-white ring-4 ring-forest/20"
-                        : "border-2 border-border bg-white text-text-light"
+                        ? "bg-ink text-white ring-4 ring-ink/15"
+                        : "border-2 border-ruled bg-paper text-pencil"
                     }
                   `}
                   aria-current={isCurrent ? "step" : undefined}
@@ -75,15 +77,15 @@ function UbDProgressIndicator({
                 </div>
                 <div className="text-center">
                   <p
-                    className={`text-xs font-heading font-semibold ${
-                      isFuture ? "text-text-light" : "text-forest"
+                    className={`text-xs font-ui font-semibold ${
+                      isFuture ? "text-pencil" : "text-ink"
                     }`}
                   >
                     {stage.shortLabel}
                   </p>
                   <p
-                    className={`text-[11px] font-body ${
-                      isFuture ? "text-text-light" : "text-text"
+                    className={`text-[11px] font-ui ${
+                      isFuture ? "text-pencil" : "text-graphite"
                     }`}
                   >
                     {stage.label}
@@ -109,13 +111,13 @@ function UbDProgressIndicator({
                 <div
                   className={`
                     flex h-8 w-8 shrink-0 items-center justify-center rounded-full
-                    text-xs font-heading font-semibold transition-all duration-300
+                    text-xs font-ui font-semibold transition-all duration-300
                     ${
                       isCompleted
-                        ? "bg-forest text-white"
+                        ? "bg-ink text-white"
                         : isCurrent
-                        ? "bg-forest text-white ring-4 ring-forest/20"
-                        : "border-2 border-border bg-white text-text-light"
+                        ? "bg-ink text-white ring-4 ring-ink/15"
+                        : "border-2 border-ruled bg-paper text-pencil"
                     }
                   `}
                   aria-current={isCurrent ? "step" : undefined}
@@ -142,7 +144,7 @@ function UbDProgressIndicator({
                 {index < stages.length - 1 && (
                   <div
                     className={`w-0.5 flex-1 min-h-[20px] ${
-                      isCompleted ? "bg-forest" : "bg-border"
+                      isCompleted ? "bg-ink" : "bg-ruled"
                     }`}
                   />
                 )}
@@ -151,8 +153,8 @@ function UbDProgressIndicator({
               {/* Label */}
               <div className="pb-4 pt-1">
                 <p
-                  className={`text-sm font-heading font-semibold leading-tight ${
-                    isFuture ? "text-text-light" : "text-forest"
+                  className={`text-sm font-ui font-semibold leading-tight ${
+                    isFuture ? "text-pencil" : "text-ink"
                   }`}
                 >
                   {stage.shortLabel}: {stage.label}
