@@ -116,7 +116,7 @@ export default async function Home() {
       <header className="sticky top-0 z-50 border-b border-ruled/60 bg-paper/80 backdrop-blur-md">
         <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3.5 sm:px-6">
           <Link href="/" className="focus-ring flex items-center gap-2" aria-label="Backward Builder home">
-            <ButterflyLogo size={28} className="text-ink" />
+            <ButterflyLogo size={28} className="text-graphite" />
             <span className="font-display text-xl text-ink sm:text-2xl">Backward Builder</span>
           </Link>
 

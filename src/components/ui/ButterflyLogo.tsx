@@ -31,7 +31,7 @@ export function ButterflyLogo({ size = 28, className = "" }: ButterflyLogoProps)
         <line
           x1="0" y1="-80" x2="0" y2="90"
           stroke="currentColor"
-          strokeWidth="5"
+          strokeWidth="8"
           strokeLinecap="round"
         />
 
@@ -40,30 +40,30 @@ export function ButterflyLogo({ size = 28, className = "" }: ButterflyLogoProps)
           d="M0,-80 Q-30,-120 -45,-128"
           fill="none"
           stroke="currentColor"
-          strokeWidth="3"
+          strokeWidth="5"
           strokeLinecap="round"
         />
-        <circle cx="-47" cy="-130" r="5" fill="currentColor" />
+        <circle cx="-47" cy="-130" r="7" fill="currentColor" />
 
         {/* Right antenna */}
         <path
           d="M0,-80 Q30,-120 45,-128"
           fill="none"
           stroke="currentColor"
-          strokeWidth="3"
+          strokeWidth="5"
           strokeLinecap="round"
         />
-        <circle cx="47" cy="-130" r="5" fill="currentColor" />
+        <circle cx="47" cy="-130" r="7" fill="currentColor" />
 
         {/* Right wing: forward B */}
-        <path d="M10,-70 L10,70" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-        <path d="M10,-70 C90,-70 90,0 10,0" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-        <path d="M10,0 C100,0 100,70 10,70" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+        <path d="M10,-70 L10,70" fill="none" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
+        <path d="M10,-70 C90,-70 90,0 10,0" fill="none" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
+        <path d="M10,0 C100,0 100,70 10,70" fill="none" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
 
         {/* Left wing: backward B */}
-        <path d="M-10,-70 L-10,70" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-        <path d="M-10,-70 C-90,-70 -90,0 -10,0" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-        <path d="M-10,0 C-100,0 -100,70 -10,70" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+        <path d="M-10,-70 L-10,70" fill="none" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
+        <path d="M-10,-70 C-90,-70 -90,0 -10,0" fill="none" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
+        <path d="M-10,0 C-100,0 -100,70 -10,70" fill="none" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
       </g>
     </svg>
   );

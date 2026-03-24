@@ -164,7 +164,7 @@ export function HeroChatBox() {
     <div className="w-full">
       {/* --- The Chat Box --- */}
       <div
-        className="animate-hero-box mx-auto w-full max-w-2xl rounded-2xl border border-ruled bg-paper shadow-[0_2px_24px_rgba(27,42,74,0.08),0_0_0_1px_rgba(27,42,74,0.03)]"
+        className="animate-hero-box mx-auto w-full max-w-3xl rounded-2xl border border-ruled bg-paper shadow-[0_2px_24px_rgba(27,42,74,0.08),0_0_0_1px_rgba(27,42,74,0.03)]"
         role="form"
         aria-label="Unit plan builder"
       >
