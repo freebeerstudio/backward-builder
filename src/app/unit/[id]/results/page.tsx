@@ -7,6 +7,8 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { Header } from "@/components/layout/Header";
 import { UbDProgressIndicator } from "@/components/unit/UbDProgressIndicator";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import type { AdjustedActivity } from "@/types";
 
 // --- Types for the results payload ---
 
@@ -112,6 +114,12 @@ export default function ResultsPage() {
   const [reteachInsights, setReteachInsights] = useState<string | null>(null);
   const [reteachLoading, setReteachLoading] = useState(false);
 
+  // Plan adjustment section
+  const [adjustmentSuggestions, setAdjustmentSuggestions] = useState<string | null>(null);
+  const [adjustedActivities, setAdjustedActivities] = useState<AdjustedActivity[]>([]);
+  const [adjustLoading, setAdjustLoading] = useState(false);
+  const [adjustError, setAdjustError] = useState<string | null>(null);
+
   // Expanded student rows
   const [expandedStudents, setExpandedStudents] = useState<Set<string>>(
     new Set()
@@ -186,6 +194,29 @@ export default function ResultsPage() {
     });
   }
 
+  async function handleAdjustPlan() {
+    setAdjustLoading(true);
+    setAdjustError(null);
+    try {
+      const res = await fetch(`/api/unit/${unitId}/adjust-plan`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.error || "Failed to generate plan adjustments");
+      }
+      const json = await res.json();
+      setAdjustmentSuggestions(json.suggestions);
+      setAdjustedActivities(json.adjustedActivities ?? []);
+    } catch (err) {
+      setAdjustError(
+        err instanceof Error ? err.message : "Failed to generate plan adjustments"
+      );
+    } finally {
+      setAdjustLoading(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-warmwhite">
@@ -235,14 +266,42 @@ export default function ResultsPage() {
           />
         </div>
 
-        {/* Page title */}
-        <div className="mb-8">
-          <h1 className="font-heading text-2xl font-bold text-forest-dark sm:text-3xl">
-            Results Dashboard
-          </h1>
-          <p className="mt-1 font-body text-text-light">
-            {unit.title} — Student performance on checks for understanding
-          </p>
+        {/* Page title + export buttons */}
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="font-heading text-2xl font-bold text-forest-dark sm:text-3xl">
+              Results Dashboard
+            </h1>
+            <p className="mt-1 font-body text-text-light">
+              {unit.title} — Student performance on checks for understanding
+            </p>
+          </div>
+          {analytics.totalStudents > 0 && (
+            <div className="flex shrink-0 items-center gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  window.open(`/api/unit/${unitId}/export?format=csv`, "_blank");
+                }}
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Export CSV
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => window.print()}
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                Print Report
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Summary Cards */}
@@ -634,6 +693,151 @@ export default function ResultsPage() {
             )}
           </div>
         </section>
+
+        {/* Adjust Learning Plan Based on Data */}
+        {analytics.totalStudents > 0 && (
+          <section className="mb-10 print:hidden">
+            <h2 className="mb-4 font-heading text-xl font-bold text-forest-dark">
+              Adjust Learning Plan Based on Data
+            </h2>
+            <div className="rounded-xl border border-border bg-card p-6">
+              {!adjustmentSuggestions && !adjustLoading && !adjustError && (
+                <div className="text-center">
+                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-forest/10">
+                    <svg
+                      className="h-7 w-7 text-forest"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={1.5}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"
+                      />
+                    </svg>
+                  </div>
+                  <p className="mb-4 font-body text-sm text-text-light">
+                    Use AI to analyze check results against your rubric criteria and get
+                    specific suggestions for adjusting your learning plan.
+                  </p>
+                  <Button
+                    variant="primary"
+                    onClick={handleAdjustPlan}
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                    Adjust Learning Plan Based on Data
+                  </Button>
+                </div>
+              )}
+
+              {adjustLoading && (
+                <div className="flex items-center gap-3 py-4">
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-forest border-t-transparent" />
+                  <p className="font-body text-sm text-text-light">
+                    Analyzing check results against rubric criteria...
+                  </p>
+                </div>
+              )}
+
+              {adjustError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+                  <p className="font-body text-sm text-red-700">{adjustError}</p>
+                  <button
+                    onClick={handleAdjustPlan}
+                    className="mt-2 font-heading text-sm font-medium text-forest hover:underline"
+                  >
+                    Try again
+                  </button>
+                </div>
+              )}
+
+              {adjustmentSuggestions && (
+                <div className="space-y-6">
+                  {/* Narrative summary */}
+                  <div className="rounded-lg border border-blue-200 bg-blue-50 p-5">
+                    <div className="mb-2 flex items-center gap-2">
+                      <svg className="h-5 w-5 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      </svg>
+                      <h3 className="font-heading text-base font-semibold text-blue-800">
+                        AI Analysis
+                      </h3>
+                    </div>
+                    <p className="font-body text-sm leading-relaxed text-blue-900">
+                      {adjustmentSuggestions}
+                    </p>
+                  </div>
+
+                  {/* Adjusted/New Activities */}
+                  {adjustedActivities.length > 0 && (
+                    <div>
+                      <h3 className="mb-3 font-heading text-base font-semibold text-text">
+                        Suggested Activity Adjustments
+                      </h3>
+                      <div className="space-y-3">
+                        {adjustedActivities.map((activity, idx) => (
+                          <div
+                            key={idx}
+                            className="rounded-lg border border-border bg-warmwhite p-4"
+                          >
+                            <div className="mb-2 flex items-center gap-2">
+                              <span
+                                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                                  activity.isNew
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-yellow-100 text-yellow-700"
+                                }`}
+                              >
+                                {activity.isNew ? "NEW" : "MODIFIED"}
+                              </span>
+                              <h4 className="font-heading text-sm font-semibold text-forest-dark">
+                                {activity.title}
+                              </h4>
+                              {activity.durationMinutes > 0 && (
+                                <span className="ml-auto font-body text-xs text-text-light">
+                                  {activity.durationMinutes} min
+                                </span>
+                              )}
+                            </div>
+                            <p className="mb-2 font-body text-sm text-text">
+                              {activity.description}
+                            </p>
+                            <div className="flex flex-wrap items-center gap-3">
+                              <span className="inline-flex items-center gap-1 font-body text-xs text-text-light">
+                                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                </svg>
+                                Builds toward: {activity.buildsToward}
+                              </span>
+                            </div>
+                            <p className="mt-2 font-body text-xs italic text-text-light">
+                              {activity.reason}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Re-run button */}
+                  <div className="flex justify-end">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleAdjustPlan}
+                    >
+                      Regenerate Suggestions
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* Back link */}
         <div className="flex items-center justify-between border-t border-border pt-6">

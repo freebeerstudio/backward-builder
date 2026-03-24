@@ -177,6 +177,22 @@ export interface PublicCheckQuestion {
   options?: { text: string }[]; // stripped of isCorrect
 }
 
+// --- AI Plan Adjustment Types ---
+
+export interface AdjustedActivity {
+  title: string;
+  description: string;
+  durationMinutes: number;
+  buildsToward: string;
+  isNew: boolean;
+  reason: string;
+}
+
+export interface PlanAdjustmentResponse {
+  suggestions: string;
+  adjustedActivities: AdjustedActivity[];
+}
+
 // --- Classroom Setup ---
 
 export interface ClassroomContext {

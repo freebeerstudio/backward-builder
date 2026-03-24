@@ -7,6 +7,8 @@ import type {
   RubricCriterion,
   CognitiveLevel,
   CriterionScore,
+  AdjustedActivity,
+  PlanAdjustmentResponse,
 } from "@/types";
 
 // ---------------------------------------------------------------------------
@@ -661,6 +663,120 @@ Return ONLY valid JSON.`;
         }
       }
       return data as { criterionScores: CriterionScore[] };
+    },
+  });
+}
+
+// ===========================================================================
+//  Plan Adjustments — data-driven instructional coaching
+// ===========================================================================
+
+/**
+ * suggestPlanAdjustments — Analyzes formative check results against the
+ * performance task rubric and current learning activities to suggest
+ * targeted adjustments. Returns both a narrative summary and specific
+ * new/modified activities with rationale.
+ */
+export async function suggestPlanAdjustments(
+  unit: { title: string; enduringUnderstanding: string; gradeLevel: string; subject: string },
+  performanceTask: { title: string; rubric: RubricCriterion[] },
+  activities: Array<{ title: string; description: string; buildsToward: string }>,
+  checkResults: Array<{ questionText: string; percentCorrect: number; type: string }>
+): Promise<PlanAdjustmentResponse> {
+  const struggledQuestions = checkResults
+    .filter((q) => q.percentCorrect < 70)
+    .sort((a, b) => a.percentCorrect - b.percentCorrect);
+
+  const strongQuestions = checkResults
+    .filter((q) => q.percentCorrect >= 70)
+    .sort((a, b) => b.percentCorrect - a.percentCorrect);
+
+  const rubricSummary = performanceTask.rubric
+    .map((c: RubricCriterion) => `  - ${c.criterionName} (${c.weight} pts)`)
+    .join("\n");
+
+  const activitySummary = activities
+    .map((a, i) => `  ${i + 1}. "${a.title}" — ${a.description} [Builds toward: ${a.buildsToward}]`)
+    .join("\n");
+
+  const systemPrompt = `You are an expert instructional coach analyzing formative assessment data to adjust instruction. You use Understanding by Design (UbD) principles and data-driven decision-making to help teachers close learning gaps before the summative performance task.
+
+Your adjustments always:
+- Are grounded in specific student performance data
+- Connect gaps directly to rubric criteria the students need for the performance task
+- Suggest concrete, actionable changes — not vague advice
+- Preserve what is working and only modify what the data says needs attention
+- Include specific reteaching strategies (not just "review" or "practice more")`;
+
+  const userPrompt = `Analyze the formative check results and suggest adjustments to the learning plan.
+
+UNIT CONTEXT:
+Title: "${unit.title}"
+Enduring Understanding: "${unit.enduringUnderstanding}"
+Grade Level: ${unit.gradeLevel}
+Subject: ${unit.subject}
+
+PERFORMANCE TASK: "${performanceTask.title}"
+Rubric Criteria:
+${rubricSummary}
+
+CURRENT LEARNING ACTIVITIES:
+${activitySummary}
+
+CHECK RESULTS — QUESTIONS STUDENTS STRUGGLED WITH (<70% correct):
+${struggledQuestions.length > 0
+    ? struggledQuestions.map((q) => `- "${q.questionText}" (${q.percentCorrect}% correct, ${q.type})`).join("\n")
+    : "None — students performed well on all questions!"}
+
+CHECK RESULTS — QUESTIONS STUDENTS PERFORMED WELL ON (>=70% correct):
+${strongQuestions.length > 0
+    ? strongQuestions.map((q) => `- "${q.questionText}" (${q.percentCorrect}% correct, ${q.type})`).join("\n")
+    : "None"}
+
+Based on this data, return a JSON object with this schema:
+{
+  "suggestions": "string — a 3-5 sentence narrative summary for the teacher explaining what the data reveals about student readiness for the performance task, which rubric criteria are at risk, and the overall adjustment strategy. Be warm, specific, and encouraging.",
+  "adjustedActivities": [
+    {
+      "title": "string — activity name",
+      "description": "string — 2-3 sentences describing what students do",
+      "durationMinutes": number,
+      "buildsToward": "string — which rubric criterion this addresses",
+      "isNew": boolean — true if this is a brand-new activity, false if it modifies an existing one,
+      "reason": "string — 1 sentence explaining why this adjustment is needed based on the data"
+    }
+  ]
+}
+
+Guidelines:
+- If students struggled with questions mapping to specific rubric criteria, suggest new remediation activities for those criteria.
+- If an existing activity covers a weak area, suggest modifications (isNew: false) with enhanced approaches.
+- Suggest 2-4 adjusted/new activities — enough to address gaps without overwhelming.
+- Include at least one suggestion for re-administering a check or adding a quick formative assessment.
+- Duration should be realistic for a ${unit.gradeLevel} classroom.
+- If students performed well overall, acknowledge that and suggest enrichment or extension activities.
+
+Return ONLY valid JSON.`;
+
+  return callClaude<PlanAdjustmentResponse>({
+    systemPrompt,
+    userPrompt,
+    maxTokens: 2048,
+    temperature: 0.5,
+    validate: (parsed: unknown) => {
+      const data = parsed as Record<string, unknown>;
+      if (!data.suggestions || typeof data.suggestions !== "string") {
+        throw new Error("Missing suggestions narrative");
+      }
+      if (!Array.isArray(data.adjustedActivities)) {
+        throw new Error("Missing adjustedActivities array");
+      }
+      for (const activity of data.adjustedActivities as AdjustedActivity[]) {
+        if (!activity.title || !activity.description || !activity.buildsToward || !activity.reason) {
+          throw new Error("Adjusted activity missing required fields");
+        }
+      }
+      return data as unknown as PlanAdjustmentResponse;
     },
   });
 }

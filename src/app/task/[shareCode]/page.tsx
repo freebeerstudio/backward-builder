@@ -483,7 +483,7 @@ export default function StudentTaskPage() {
 
         {/* Link tab */}
         {activeTab === "link" && (
-          <div className="space-y-2">
+          <div className="space-y-3">
             <input
               type="url"
               value={linkContent}
@@ -494,10 +494,7 @@ export default function StudentTaskPage() {
                 focus:outline-none focus:ring-2 focus:ring-forest/30 focus:border-forest
                 transition-all"
             />
-            <p className="text-xs text-text-light font-body">
-              Paste a link to your Google Doc, Google Slides, or other shared document.
-              Make sure sharing is enabled.
-            </p>
+            <LinkPreview url={linkContent} />
           </div>
         )}
 
@@ -525,6 +522,98 @@ export default function StudentTaskPage() {
         </p>
       </div>
     </TaskShell>
+  );
+}
+
+// --- Google URL detection + link preview ---
+
+function isGoogleUrl(url: string): { type: "doc" | "slides" | "sheets" } | null {
+  if (url.includes("docs.google.com/document")) return { type: "doc" };
+  if (url.includes("docs.google.com/presentation")) return { type: "slides" };
+  if (url.includes("docs.google.com/spreadsheets")) return { type: "sheets" };
+  return null;
+}
+
+const GOOGLE_LABELS: Record<string, { icon: string; label: string }> = {
+  doc: { icon: "\uD83D\uDCC4", label: "Google Docs linked" },
+  slides: { icon: "\uD83D\uDCCA", label: "Google Slides linked" },
+  sheets: { icon: "\uD83D\uDCCB", label: "Google Sheets linked" },
+};
+
+function LinkPreview({ url }: { url: string }) {
+  const trimmed = url.trim();
+
+  if (!trimmed) {
+    return (
+      <p className="text-xs text-text-light font-body">
+        Paste a link to your Google Doc, Google Slides, or other shared document.
+        Make sure sharing is enabled.
+      </p>
+    );
+  }
+
+  const google = isGoogleUrl(trimmed);
+
+  if (google) {
+    const info = GOOGLE_LABELS[google.type];
+    return (
+      <div className="rounded-lg border border-forest/20 bg-forest/5 p-3 flex items-start gap-3">
+        <span className="text-2xl leading-none mt-0.5">{info.icon}</span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-heading font-semibold text-forest">
+              {info.label}
+            </span>
+            <svg
+              className="h-4 w-4 text-success shrink-0"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          </div>
+          <p className="text-xs text-text-light font-body font-mono truncate mt-0.5">
+            {trimmed.length > 50 ? trimmed.slice(0, 50) + "..." : trimmed}
+          </p>
+          <p className="text-xs text-text-light/80 font-body mt-1.5">
+            Make sure your document is shared (anyone with the link can view).
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Non-Google URL — basic confirmation
+  return (
+    <div className="rounded-lg border border-border bg-warmwhite p-3 flex items-center gap-3">
+      <svg
+        className="h-5 w-5 text-forest shrink-0"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth={2}
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+        />
+      </svg>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-heading font-medium text-text">
+          Link attached
+        </p>
+        <p className="text-xs text-text-light font-body font-mono truncate">
+          {trimmed.length > 50 ? trimmed.slice(0, 50) + "..." : trimmed}
+        </p>
+      </div>
+    </div>
   );
 }
 
