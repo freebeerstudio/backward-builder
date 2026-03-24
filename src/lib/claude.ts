@@ -1,5 +1,16 @@
 import Anthropic from "@anthropic-ai/sdk";
-import type { AssessmentInput, GeneratedAssessment, GeneratedQuestion, RubricLevel } from "@/types";
+import type {
+  UnderstandingAnalysis,
+  GeneratedPerformanceTask,
+  GeneratedCheck,
+  GeneratedActivity,
+  RubricCriterion,
+  CognitiveLevel,
+} from "@/types";
+
+// ---------------------------------------------------------------------------
+// Client & Model
+// ---------------------------------------------------------------------------
 
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -7,223 +18,452 @@ const client = new Anthropic({
 
 const MODEL = "claude-sonnet-4-20250514";
 
+// ---------------------------------------------------------------------------
+// Generic retry wrapper — the backbone of every AI call in the pipeline
+// ---------------------------------------------------------------------------
+
 /**
- * System prompt establishes Claude as an expert UbD assessment designer.
- * This is the core of what makes Backward Builder's AI impressive —
- * the prompt ensures questions align with what the teacher actually taught,
- * not generic topic knowledge.
+ * callClaude<T> — sends a structured prompt to Claude and returns parsed,
+ * validated JSON. Retries up to 3 times with exponential backoff so a single
+ * malformed response never tanks the pipeline.
  */
-const ASSESSMENT_SYSTEM_PROMPT = `You are an expert middle school history/social studies assessment designer who follows Understanding by Design (UbD) principles. You create assessments that are:
+async function callClaude<T>(options: {
+  systemPrompt: string;
+  userPrompt: string;
+  maxTokens: number;
+  temperature: number;
+  validate?: (parsed: unknown) => T;
+}): Promise<T> {
+  const { systemPrompt, userPrompt, maxTokens, temperature, validate } = options;
+  let lastError: Error | null = null;
 
-- Directly aligned to the enduring understanding and specific content the teacher covered
-- Rigorous but age-appropriate for the specified grade level
-- Designed with strong distractors that reflect real student misconceptions (not obviously wrong answers)
-- Inclusive of document-based questions when primary sources were used in instruction
-- Accompanied by clear, specific scoring rubrics for constructed response questions
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      // Exponential backoff on retries (0ms, 2s, 4s)
+      if (attempt > 0) {
+        await new Promise((resolve) => setTimeout(resolve, 1000 * Math.pow(2, attempt)));
+      }
 
-You MUST only assess content the teacher explicitly mentioned covering. Never add topics or events the teacher didn't list.
+      const response = await client.messages.create({
+        model: MODEL,
+        max_tokens: maxTokens,
+        temperature,
+        system: systemPrompt,
+        messages: [{ role: "user", content: userPrompt }],
+      });
 
-Return your assessment as valid JSON matching this exact schema:
+      const textBlock = response.content.find((block) => block.type === "text");
+      if (!textBlock || textBlock.type !== "text") {
+        throw new Error("No text content in Claude response");
+      }
+
+      const parsed = JSON.parse(cleanJSON(textBlock.text));
+
+      // Run the caller's validator if provided; otherwise cast directly
+      return validate ? validate(parsed) : (parsed as T);
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      console.error(`callClaude attempt ${attempt + 1} failed:`, lastError.message);
+    }
+  }
+
+  throw new Error(`callClaude failed after 3 attempts: ${lastError?.message}`);
+}
+
+// ---------------------------------------------------------------------------
+// Shared system prompt prefix — every function in the pipeline inherits this
+// identity so Claude maintains consistent UbD voice across stages.
+// ---------------------------------------------------------------------------
+
+const UBD_EXPERT = `You are an expert Understanding by Design (UbD) curriculum designer with deep knowledge of Wiggins & McTighe's backward design framework. You specialize in creating rigorous, standards-aligned curriculum plans for K-12 teachers.
+
+Your designs always:
+- Start from enduring understandings and work backward to learning activities
+- Align assessments directly to what students should understand and be able to do
+- Use authentic, real-world performance tasks that require genuine transfer of knowledge
+- Scaffold learning so every activity builds toward the final performance task
+- Reference state standards by their actual codes (e.g., "NGSS MS-LS2-2", "CCSS.ELA-LITERACY.RH.6-8.7")`;
+
+// ===========================================================================
+//  Stage 1 — Analyze the Enduring Understanding
+// ===========================================================================
+
+/**
+ * analyzeUnderstanding — Takes a teacher's enduring understanding and maps it
+ * to state standards, classifies the Bloom's level, and generates essential
+ * questions. This is Stage 1 of the backward design pipeline.
+ */
+export async function analyzeUnderstanding(
+  understanding: string,
+  grade: string,
+  subject: string,
+  state: string
+): Promise<UnderstandingAnalysis> {
+  const systemPrompt = `${UBD_EXPERT}
+
+You are analyzing a teacher's enduring understanding to lay the foundation for a UbD unit. Your analysis must be precise, actionable, and grounded in real state standards.`;
+
+  const userPrompt = `Analyze this enduring understanding for a ${grade} ${subject} class in ${state}:
+
+"${understanding}"
+
+Return a JSON object with this exact schema:
 {
-  "title": "string — a clear, descriptive assessment title",
-  "description": "string — brief description of what this assessment covers",
-  "questions": [
+  "title": "string — a concise unit title derived from the enduring understanding",
+  "essentialQuestions": ["string — 2-3 open-ended questions that drive inquiry toward this understanding"],
+  "standardCodes": ["string — 2-4 specific ${state} state standard codes this aligns to (e.g., '7.LS2.A', 'CCSS.ELA-LITERACY.RH.6-8.2', 'NGSS MS-ESS2-1')"],
+  "standardDescriptions": ["string — the full text of each standard listed above"],
+  "cognitiveLevel": "string — one of: remember, understand, apply, analyze, evaluate, create",
+  "cognitiveLevelExplanation": "string — 1 sentence explaining why this understanding sits at this Bloom's level",
+  "reflectionForTeacher": "string — 1-2 sentences of warm, constructive feedback on the enduring understanding's clarity and scope"
+}
+
+Guidelines:
+- Essential questions should be debatable and thought-provoking, not yes/no. For example, "How do changes in one part of an ecosystem ripple through the entire food web?" rather than "What is a food web?"
+- Standard codes must be real codes from ${state}'s adopted standards framework for ${subject}.
+- The cognitive level should reflect the deepest thinking the enduring understanding demands.
+
+Return ONLY valid JSON.`;
+
+  return callClaude<UnderstandingAnalysis>({
+    systemPrompt,
+    userPrompt,
+    maxTokens: 1024,
+    temperature: 0.5,
+    validate: (parsed: unknown) => {
+      const data = parsed as Record<string, unknown>;
+      if (
+        !data.title ||
+        !Array.isArray(data.essentialQuestions) ||
+        !Array.isArray(data.standardCodes) ||
+        !data.cognitiveLevel
+      ) {
+        throw new Error("Invalid UnderstandingAnalysis: missing required fields");
+      }
+      return data as unknown as UnderstandingAnalysis;
+    },
+  });
+}
+
+// ===========================================================================
+//  Stage 2A — Generate Performance Tasks (the capstone assessment)
+// ===========================================================================
+
+/** Input shape for pipeline functions that need the full unit context. */
+interface UnitContext {
+  title: string;
+  enduringUnderstanding: string;
+  essentialQuestions: string[];
+  standardCodes: string[];
+  standardDescriptions: string[];
+  cognitiveLevel: CognitiveLevel;
+  gradeLevel: string;
+  subject: string;
+}
+
+/**
+ * generatePerformanceTasks — Creates two GRASPS-based performance task
+ * options with full rubrics. These are the "Stage 2" capstone assessments
+ * in backward design — designed before any learning activities.
+ */
+export async function generatePerformanceTasks(
+  unit: UnitContext
+): Promise<{ tasks: GeneratedPerformanceTask[] }> {
+  const systemPrompt = `${UBD_EXPERT}
+
+You are designing GRASPS performance tasks — authentic assessments that require students to transfer their understanding to real-world scenarios. Each task must have a complete multi-criterion rubric with four proficiency levels.
+
+GRASPS framework:
+- Goal: What the student must accomplish
+- Role: Who the student is in the scenario
+- Audience: Who they are presenting to
+- Situation: The real-world context
+- Product/Performance: What they create
+- Standards: How it will be evaluated (the rubric)`;
+
+  const userPrompt = `Design 2 performance task options for this UbD unit:
+
+Unit: "${unit.title}"
+Enduring Understanding: "${unit.enduringUnderstanding}"
+Essential Questions:
+${unit.essentialQuestions.map((q) => `  - ${q}`).join("\n")}
+Standards: ${unit.standardCodes.join(", ")}
+${unit.standardDescriptions.map((d, i) => `  ${unit.standardCodes[i]}: ${d}`).join("\n")}
+Cognitive Level: ${unit.cognitiveLevel}
+Grade Level: ${unit.gradeLevel}
+Subject: ${unit.subject}
+
+Return a JSON object with this schema:
+{
+  "tasks": [
     {
-      "type": "multiple_choice",
-      "questionText": "string — the full question",
-      "points": 2,
-      "options": [
-        { "text": "string — option text", "isCorrect": false },
-        { "text": "string — option text", "isCorrect": true },
-        { "text": "string — option text", "isCorrect": false },
-        { "text": "string — option text", "isCorrect": false }
+      "title": "string — engaging task name",
+      "description": "string — 2-3 sentence overview of what students will do",
+      "scenario": "string — the full GRASPS scenario (Goal, Role, Audience, Situation, Product described in a compelling narrative paragraph). Use vivid, real-world contexts — e.g., a wildlife biologist analyzing the Yellowstone wolf reintroduction, a journalist covering the Boston Tea Party, a city planner designing for climate resilience.",
+      "estimatedTimeMinutes": number,
+      "cognitiveLevel": "string — Bloom's level this task targets",
+      "rubric": [
+        {
+          "criterionName": "string — what is being evaluated (e.g., 'Use of Evidence', 'Scientific Reasoning', 'Communication Clarity')",
+          "weight": number — points for this criterion,
+          "levels": [
+            { "score": 4, "label": "Exemplary", "description": "string — specific, observable indicators" },
+            { "score": 3, "label": "Proficient", "description": "string — meets the standard" },
+            { "score": 2, "label": "Developing", "description": "string — partial understanding" },
+            { "score": 1, "label": "Beginning", "description": "string — significant gaps" }
+          ]
+        }
       ]
-    },
-    {
-      "type": "document_based",
-      "questionText": "string — the analytical question about the source",
-      "points": 5,
-      "sourceDocument": "string — the primary source text or excerpt",
-      "sourceAttribution": "string — author, title, date",
-      "scaffoldingQuestions": ["string — guiding question 1", "string — guiding question 2"],
-      "rubric": [
-        { "score": 5, "description": "Exemplary — ..." },
-        { "score": 4, "description": "Proficient — ..." },
-        { "score": 3, "description": "Developing — ..." },
-        { "score": 2, "description": "Beginning — ..." },
-        { "score": 1, "description": "Incomplete — ..." }
-      ],
-      "sampleAnswer": "string — a model response demonstrating proficient understanding"
-    },
-    {
-      "type": "constructed_response",
-      "questionText": "string — open-ended analytical question",
-      "points": 10,
-      "rubric": [
-        { "score": 10, "description": "Exemplary — ..." },
-        { "score": 8, "description": "Proficient — ..." },
-        { "score": 6, "description": "Developing — ..." },
-        { "score": 4, "description": "Beginning — ..." },
-        { "score": 2, "description": "Incomplete — ..." }
-      ],
-      "sampleAnswer": "string — a model response"
     }
   ]
 }
 
-IMPORTANT: Return ONLY valid JSON. No markdown code fences, no explanation text before or after.`;
+Requirements:
+- Each task must have 3-4 rubric criteria.
+- Rubric descriptions must be specific and observable — not vague ("good work") but concrete ("cites at least 3 pieces of textual evidence with accurate page references").
+- The two tasks should offer meaningfully different scenarios and products — not just minor variations.
+- Scenarios must feel authentic to ${unit.gradeLevel} students and connect to real-world situations.
 
-/**
- * Generates a complete assessment from teacher input.
- * Uses temperature 0.7 for creative but grounded output.
- * Includes retry logic for malformed JSON responses.
- */
-export async function generateAssessment(input: AssessmentInput): Promise<GeneratedAssessment> {
-  const userPrompt = buildGenerationPrompt(input);
+Return ONLY valid JSON.`;
 
-  let lastError: Error | null = null;
-
-  // Retry up to 3 times with exponential backoff
-  for (let attempt = 0; attempt < 3; attempt++) {
-    try {
-      if (attempt > 0) {
-        await new Promise((resolve) => setTimeout(resolve, 1000 * Math.pow(2, attempt)));
+  return callClaude<{ tasks: GeneratedPerformanceTask[] }>({
+    systemPrompt,
+    userPrompt,
+    maxTokens: 4096,
+    temperature: 0.7,
+    validate: (parsed: unknown) => {
+      const data = parsed as { tasks?: unknown[] };
+      if (!Array.isArray(data.tasks) || data.tasks.length < 2) {
+        throw new Error("Expected at least 2 performance tasks");
       }
-
-      const response = await client.messages.create({
-        model: MODEL,
-        max_tokens: 4096,
-        temperature: 0.7,
-        system: ASSESSMENT_SYSTEM_PROMPT,
-        messages: [{ role: "user", content: userPrompt }],
-      });
-
-      const textContent = response.content.find((block) => block.type === "text");
-      if (!textContent || textContent.type !== "text") {
-        throw new Error("No text content in Claude response");
+      for (const task of data.tasks as GeneratedPerformanceTask[]) {
+        if (!task.title || !task.scenario || !Array.isArray(task.rubric)) {
+          throw new Error("Performance task missing required fields");
+        }
+        if (task.rubric.length < 3) {
+          throw new Error("Each task must have at least 3 rubric criteria");
+        }
       }
-
-      const parsed = parseAssessmentJSON(textContent.text);
-      validateAssessment(parsed);
-      return parsed;
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
-      console.error(`Assessment generation attempt ${attempt + 1} failed:`, lastError.message);
-    }
-  }
-
-  throw new Error(`Failed to generate assessment after 3 attempts: ${lastError?.message}`);
+      return data as { tasks: GeneratedPerformanceTask[] };
+    },
+  });
 }
 
+// ===========================================================================
+//  Stage 2B — Generate Checks for Understanding (formative assessments)
+// ===========================================================================
+
 /**
- * Regenerates a single question based on teacher feedback.
- * Uses lower temperature (0.3) for more predictable output.
+ * generateChecksForUnderstanding — Creates formative checks that give teachers
+ * a mid-unit pulse on student progress. Questions map directly to rubric
+ * criteria from the selected performance task so the checks serve as
+ * early-warning signals before the capstone.
  */
-export async function regenerateQuestion(
-  currentQuestion: GeneratedQuestion,
-  feedback: string,
-  assessmentContext: AssessmentInput
-): Promise<GeneratedQuestion> {
-  const prompt = `You are editing a single assessment question based on teacher feedback.
+export async function generateChecksForUnderstanding(
+  unit: UnitContext,
+  performanceTask: GeneratedPerformanceTask
+): Promise<{ checks: GeneratedCheck[] }> {
+  const rubricSummary = performanceTask.rubric
+    .map((c: RubricCriterion) => `  - ${c.criterionName} (${c.weight} pts)`)
+    .join("\n");
 
-Teacher's feedback: "${feedback}"
+  const systemPrompt = `${UBD_EXPERT}
 
-Current question:
-${JSON.stringify(currentQuestion, null, 2)}
+You are creating formative checks for understanding — short, focused assessments that teachers use during a unit to gauge whether students are building the knowledge and skills needed for the performance task. Each check should be quick to administer (5-10 minutes) and easy to score.`;
 
-Assessment context:
-- Topic: ${assessmentContext.topic}
-- Grade Level: ${assessmentContext.gradeLevel}
-- Objectives: ${assessmentContext.objectives}
-- Topics Covered: ${assessmentContext.topicsCovered}
+  const userPrompt = `Create 2 formative checks for understanding for this UbD unit:
 
-Regenerate ONLY this question, maintaining alignment with the enduring understanding and topics covered.
-Return the updated question as valid JSON matching the same schema. Return ONLY the JSON, no other text.`;
+Unit: "${unit.title}"
+Enduring Understanding: "${unit.enduringUnderstanding}"
+Grade Level: ${unit.gradeLevel}
+Subject: ${unit.subject}
 
-  let lastError: Error | null = null;
+Performance Task: "${performanceTask.title}"
+Scenario: ${performanceTask.scenario}
 
-  for (let attempt = 0; attempt < 3; attempt++) {
-    try {
-      if (attempt > 0) {
-        await new Promise((resolve) => setTimeout(resolve, 1000 * Math.pow(2, attempt)));
-      }
+Rubric Criteria Being Assessed:
+${rubricSummary}
 
-      const response = await client.messages.create({
-        model: MODEL,
-        max_tokens: 2048,
-        temperature: 0.3,
-        system: "You are an expert assessment designer. Return only valid JSON.",
-        messages: [{ role: "user", content: prompt }],
-      });
-
-      const textContent = response.content.find((block) => block.type === "text");
-      if (!textContent || textContent.type !== "text") {
-        throw new Error("No text content in Claude response");
-      }
-
-      const parsed = JSON.parse(cleanJSON(textContent.text)) as GeneratedQuestion;
-      if (!parsed.type || !parsed.questionText || typeof parsed.points !== "number") {
-        throw new Error("Invalid question structure");
-      }
-      return parsed;
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
-      console.error(`Question regeneration attempt ${attempt + 1} failed:`, lastError.message);
+Return a JSON object with this schema:
+{
+  "checks": [
+    {
+      "title": "string — descriptive check name (e.g., 'Evidence Analysis Quick Check')",
+      "placementNote": "string — when in the learning sequence this should be used (e.g., 'Use after students have completed the primary source analysis activity, before they begin drafting their performance task response.')",
+      "questions": [
+        {
+          "type": "selected_response",
+          "questionText": "string — the question stem",
+          "points": 1,
+          "options": [
+            { "text": "string", "isCorrect": false },
+            { "text": "string", "isCorrect": true },
+            { "text": "string", "isCorrect": false },
+            { "text": "string", "isCorrect": false }
+          ],
+          "correctAnswer": "string — the text of the correct option"
+        },
+        {
+          "type": "short_answer",
+          "questionText": "string — question requiring a 1-3 sentence response",
+          "points": 2,
+          "correctAnswer": "string — model answer the teacher can use for quick scoring"
+        }
+      ]
     }
-  }
-
-  throw new Error(`Failed to regenerate question after 3 attempts: ${lastError?.message}`);
+  ]
 }
 
-/**
- * Grades a constructed response or DBQ answer using Claude.
- * Returns a score and brief feedback.
- */
-export async function gradeResponse(
-  questionText: string,
-  rubric: RubricLevel[],
-  sampleAnswer: string | null,
-  studentAnswer: string,
-  gradeLevel: string
-): Promise<{ score: number; feedback: string }> {
-  const prompt = `You are grading a ${gradeLevel} student's response to a history assessment question.
+Requirements:
+- Each check should have 4-6 questions.
+- Mix of selected_response (multiple choice with 4 options, exactly 1 correct) and short_answer.
+- Questions must map to specific rubric criteria from the performance task — they are diagnostic, not just trivia.
+- Short answer questions should require students to explain thinking, not just recall facts.
+- Placement notes should be specific and practical — tell the teacher exactly when to use each check.
 
-Question: ${questionText}
+Return ONLY valid JSON.`;
 
-Rubric:
-${rubric.map((r) => `${r.score} points: ${r.description}`).join("\n")}
-
-${sampleAnswer ? `Sample Answer: ${sampleAnswer}` : ""}
-
-Student Response: ${studentAnswer}
-
-Score the response according to the rubric. Be fair but rigorous — this is a middle school assessment.
-Return ONLY valid JSON: { "score": <number matching a rubric level>, "feedback": "<1-2 sentences of specific, encouraging feedback>" }`;
-
-  try {
-    const response = await client.messages.create({
-      model: MODEL,
-      max_tokens: 256,
-      temperature: 0.3,
-      messages: [{ role: "user", content: prompt }],
-    });
-
-    const textContent = response.content.find((block) => block.type === "text");
-    if (!textContent || textContent.type !== "text") {
-      throw new Error("No text content");
-    }
-
-    return JSON.parse(cleanJSON(textContent.text));
-  } catch (error) {
-    console.error("Grading failed:", error);
-    // Graceful fallback — don't block submission if grading fails
-    return { score: 0, feedback: "Auto-grading unavailable. Please score manually." };
-  }
+  return callClaude<{ checks: GeneratedCheck[] }>({
+    systemPrompt,
+    userPrompt,
+    maxTokens: 3072,
+    temperature: 0.5,
+    validate: (parsed: unknown) => {
+      const data = parsed as { checks?: unknown[] };
+      if (!Array.isArray(data.checks) || data.checks.length < 2) {
+        throw new Error("Expected at least 2 checks for understanding");
+      }
+      for (const check of data.checks as GeneratedCheck[]) {
+        if (!check.title || !check.placementNote || !Array.isArray(check.questions)) {
+          throw new Error("Check missing required fields");
+        }
+        if (check.questions.length < 4) {
+          throw new Error("Each check must have at least 4 questions");
+        }
+        // Validate MC questions have exactly 1 correct answer
+        for (const q of check.questions) {
+          if (q.type === "selected_response" && Array.isArray(q.options)) {
+            const correctCount = q.options.filter((o) => o.isCorrect).length;
+            if (correctCount !== 1) {
+              throw new Error(`MC question must have exactly 1 correct answer, found ${correctCount}`);
+            }
+          }
+        }
+      }
+      return data as { checks: GeneratedCheck[] };
+    },
+  });
 }
 
+// ===========================================================================
+//  Stage 3 — Generate Learning Plan (daily activities)
+// ===========================================================================
+
 /**
- * Analyzes wrong-answer patterns to suggest what to reteach.
- * Called from the results dashboard to provide actionable insights.
+ * generateLearningPlan — Creates a sequenced set of learning activities that
+ * scaffold from foundational knowledge up to transfer. This is Stage 3 of
+ * backward design — planned last because every activity's purpose is defined
+ * by the assessments that came before it.
+ */
+export async function generateLearningPlan(
+  unit: UnitContext,
+  performanceTask: GeneratedPerformanceTask,
+  checks: GeneratedCheck[]
+): Promise<{ activities: GeneratedActivity[] }> {
+  const rubricCriteria = performanceTask.rubric
+    .map((c: RubricCriterion) => `  - ${c.criterionName} (${c.weight} pts)`)
+    .join("\n");
+
+  const checkSummary = checks
+    .map((c) => `  - "${c.title}" — ${c.placementNote}`)
+    .join("\n");
+
+  const systemPrompt = `${UBD_EXPERT}
+
+You are designing the learning plan — the daily activities that build student capacity toward the performance task. In UbD, Stage 3 activities are planned LAST because they exist to serve the assessments, not the other way around.
+
+Your learning plans follow the WHERE TO sequence:
+- W: Where are we going? Why? What is expected?
+- H: Hook students early and Hold their attention
+- E: Equip students with knowledge and skills
+- R: Rethink, reflect, and revise understanding
+- E: Evaluate progress along the way
+- T: Tailor to individual needs
+- O: Organize for optimal learning`;
+
+  const userPrompt = `Design a learning plan (6-8 sequenced activities) for this UbD unit:
+
+Unit: "${unit.title}"
+Enduring Understanding: "${unit.enduringUnderstanding}"
+Essential Questions:
+${unit.essentialQuestions.map((q) => `  - ${q}`).join("\n")}
+Grade Level: ${unit.gradeLevel}
+Subject: ${unit.subject}
+
+Performance Task: "${performanceTask.title}"
+Scenario: ${performanceTask.scenario}
+Rubric Criteria:
+${rubricCriteria}
+
+Formative Checks:
+${checkSummary}
+
+Return a JSON object with this schema:
+{
+  "activities": [
+    {
+      "sequenceOrder": number — 1-based position in the sequence,
+      "title": "string — clear, specific activity name (e.g., 'Ecosystem Web Mapping' not 'Activity 1')",
+      "description": "string — 2-3 sentences describing what students do, how, and why this matters for the performance task",
+      "durationMinutes": number — realistic class time estimate,
+      "materials": "string — specific materials needed (e.g., 'Copies of the 1773 Tea Act excerpt, chart paper, markers')",
+      "buildsToward": "string — which rubric criterion this activity directly supports",
+      "associatedCheckTitle": "string or null — title of the formative check that should follow this activity, or null if none"
+    }
+  ]
+}
+
+Requirements:
+- Activities must scaffold from foundational knowledge to transfer:
+  1-2: Hook and activate prior knowledge (W, H)
+  3-4: Build core knowledge and skills (E — Equip)
+  5-6: Practice and apply (R — Rethink, E — Evaluate)
+  7-8: Synthesize and prepare for performance task (T, O)
+- Every rubric criterion must have at least one activity that builds toward it.
+- Formative checks should be placed between activities at natural diagnostic points.
+- Materials should be specific and realistic — not "various resources."
+- Descriptions should tell a teacher exactly what students DO, not just what they learn.
+
+Return ONLY valid JSON.`;
+
+  return callClaude<{ activities: GeneratedActivity[] }>({
+    systemPrompt,
+    userPrompt,
+    maxTokens: 3072,
+    temperature: 0.6,
+    validate: (parsed: unknown) => {
+      const data = parsed as { activities?: unknown[] };
+      if (!Array.isArray(data.activities) || data.activities.length < 6) {
+        throw new Error("Expected at least 6 learning activities");
+      }
+      for (const activity of data.activities as GeneratedActivity[]) {
+        if (!activity.title || !activity.description || !activity.buildsToward) {
+          throw new Error("Activity missing required fields");
+        }
+      }
+      return data as { activities: GeneratedActivity[] };
+    },
+  });
+}
+
+// ===========================================================================
+//  Reteach Insights — post-assessment analysis
+// ===========================================================================
+
+/**
+ * generateReteachInsights — Analyzes wrong-answer patterns from completed
+ * checks to suggest targeted reteaching strategies. Called from the results
+ * dashboard to give teachers actionable next steps.
  */
 export async function generateReteachInsights(
   questions: Array<{ questionText: string; percentCorrect: number; type: string }>,
@@ -237,7 +477,7 @@ export async function generateReteachInsights(
     return "Great news! Your students performed well across all questions. No major reteaching needed.";
   }
 
-  const prompt = `You are a helpful instructional coach for a middle school history teacher.
+  const prompt = `You are a supportive instructional coach helping a teacher interpret check-for-understanding results.
 
 Topic: ${topic}
 
@@ -247,7 +487,7 @@ ${struggledQuestions.map((q) => `- "${q.questionText}" (${q.percentCorrect}% cor
 Based on these results, provide 2-3 specific, actionable reteaching suggestions. Focus on:
 1. What concepts students likely misunderstand
 2. A specific activity or approach to address each gap
-3. Keep suggestions practical and classroom-ready
+3. How this connects to their readiness for the performance task
 
 Be warm, encouraging, and specific. Write 3-5 sentences total.`;
 
@@ -266,34 +506,59 @@ Be warm, encouraging, and specific. Write 3-5 sentences total.`;
   }
 }
 
-// --- Helper functions ---
+// ===========================================================================
+//  Grade Check Answer — quick scoring for short-answer questions
+// ===========================================================================
 
-/** Builds the user prompt from teacher input */
-function buildGenerationPrompt(input: AssessmentInput): string {
-  const hasSources = input.sourcesUsed && input.sourcesUsed.trim().length > 0;
+/**
+ * gradeCheckAnswer — Scores a single short-answer response against the
+ * model answer. Returns a simple score and brief feedback. Uses low
+ * temperature for consistent grading.
+ */
+export async function gradeCheckAnswer(
+  questionText: string,
+  correctAnswer: string,
+  studentAnswer: string
+): Promise<{ score: number; maxScore: number; feedback: string }> {
+  const prompt = `You are scoring a student's short-answer response on a formative check for understanding.
 
-  return `Create a comprehensive history assessment for ${input.gradeLevel} students.
+Question: ${questionText}
+Model Answer: ${correctAnswer}
+Student Response: ${studentAnswer}
 
-Topic: ${input.topic}
-Unit Length: ${input.unitLength}
+Score this response out of 2 points:
+- 2 points: Demonstrates clear understanding; captures the key idea(s) from the model answer
+- 1 point: Partially correct; shows some understanding but missing key elements
+- 0 points: Incorrect, off-topic, or blank
 
-Enduring Understanding / Learning Objectives:
-${input.objectives}
+Return ONLY valid JSON: { "score": <0|1|2>, "maxScore": 2, "feedback": "<1 sentence of specific, encouraging feedback>" }`;
 
-Specific Topics and Events Covered:
-${input.topicsCovered}
+  try {
+    const response = await client.messages.create({
+      model: MODEL,
+      max_tokens: 256,
+      temperature: 0.3,
+      messages: [{ role: "user", content: prompt }],
+    });
 
-${hasSources ? `Primary Sources and Texts Used in Instruction:\n${input.sourcesUsed}` : "No specific primary sources mentioned."}
+    const textContent = response.content.find((block) => block.type === "text");
+    if (!textContent || textContent.type !== "text") {
+      throw new Error("No text content");
+    }
 
-Generate a balanced assessment including:
-- 5-6 multiple choice questions (2 points each) with 4 options and strong distractors
-${hasSources ? "- 1 document-based question using one of the primary sources mentioned above (5 points)" : "- 1 document-based question with a relevant primary source excerpt (5 points)"}
-- 1 constructed response question requiring analytical thinking (10 points)
-
-Total should be approximately 25 points. Ensure all questions are directly tied to the topics the teacher listed.`;
+    return JSON.parse(cleanJSON(textContent.text));
+  } catch (error) {
+    console.error("Grading failed:", error);
+    // Graceful fallback — don't block submission if auto-grading fails
+    return { score: 0, maxScore: 2, feedback: "Auto-grading unavailable. Please score manually." };
+  }
 }
 
-/** Strips markdown code fences and whitespace from JSON response */
+// ===========================================================================
+//  Helper — cleanJSON
+// ===========================================================================
+
+/** Strips markdown code fences and whitespace from Claude's JSON responses. */
 function cleanJSON(text: string): string {
   let cleaned = text.trim();
   // Remove markdown code fences if present
@@ -306,47 +571,4 @@ function cleanJSON(text: string): string {
     cleaned = cleaned.slice(0, -3);
   }
   return cleaned.trim();
-}
-
-/** Parses and validates the assessment JSON from Claude's response */
-function parseAssessmentJSON(text: string): GeneratedAssessment {
-  const cleaned = cleanJSON(text);
-  const parsed = JSON.parse(cleaned);
-
-  if (!parsed.title || !Array.isArray(parsed.questions)) {
-    throw new Error("Invalid assessment structure: missing title or questions array");
-  }
-
-  return parsed as GeneratedAssessment;
-}
-
-/** Validates the generated assessment has the expected structure */
-function validateAssessment(assessment: GeneratedAssessment): void {
-  if (assessment.questions.length === 0) {
-    throw new Error("Assessment has no questions");
-  }
-
-  for (const q of assessment.questions) {
-    if (!q.type || !q.questionText || typeof q.points !== "number") {
-      throw new Error(`Invalid question: missing required fields`);
-    }
-
-    if (q.type === "multiple_choice") {
-      if (!Array.isArray(q.options) || q.options.length < 3) {
-        throw new Error("MC question must have at least 3 options");
-      }
-      const correctCount = q.options.filter((o) => o.isCorrect).length;
-      if (correctCount !== 1) {
-        throw new Error("MC question must have exactly 1 correct answer");
-      }
-    }
-
-    if (q.type === "document_based" && !q.sourceDocument) {
-      throw new Error("DBQ must include source document");
-    }
-
-    if ((q.type === "constructed_response" || q.type === "document_based") && !q.rubric) {
-      throw new Error(`${q.type} question must include a rubric`);
-    }
-  }
 }

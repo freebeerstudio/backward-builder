@@ -1,165 +1,176 @@
-// Shared types for Backward Builder
-// These mirror the database schema but are used throughout the app
+// Shared types for Backward Builder — UbD Curriculum Design Tool
 
-export type QuestionType = "multiple_choice" | "document_based" | "constructed_response";
-export type AssessmentStatus = "draft" | "published" | "archived";
+// --- Enums ---
 
-/** Teacher input from the conversational flow */
-export interface AssessmentInput {
-  topic: string;
-  gradeLevel: string;
-  unitLength: string;
-  objectives: string;
-  topicsCovered: string;
-  sourcesUsed: string;
+export type QuestionType = "selected_response" | "short_answer";
+export type UnitStatus = "stage1" | "stage2" | "stage3" | "complete";
+export type AssessmentStatus = "draft" | "live" | "closed";
+export type SubmissionType = "check" | "performance_task";
+export type CognitiveLevel = "remember" | "understand" | "apply" | "analyze" | "evaluate" | "create";
+
+// --- Rubric Types ---
+
+export interface RubricLevel {
+  score: number;
+  label: string; // "Exemplary" | "Proficient" | "Developing" | "Beginning"
+  description: string;
 }
 
-/** A single MC option */
+export interface RubricCriterion {
+  criterionName: string;
+  weight: number; // points for this criterion
+  levels: RubricLevel[];
+}
+
+// --- MC Option ---
+
 export interface MCOption {
   text: string;
   isCorrect: boolean;
 }
 
-/** Rubric scoring criteria */
-export interface RubricLevel {
-  score: number;
-  description: string;
+// --- AI Response Types ---
+
+/** Response from analyzeUnderstanding() */
+export interface UnderstandingAnalysis {
+  title: string;
+  essentialQuestions: string[];
+  standardCodes: string[];
+  standardDescriptions: string[];
+  cognitiveLevel: CognitiveLevel;
+  cognitiveLevelExplanation: string;
+  reflectionForTeacher: string;
 }
 
-/** Claude API response for a generated question */
-export interface GeneratedQuestion {
+/** Response from generatePerformanceTasks() */
+export interface GeneratedPerformanceTask {
+  title: string;
+  description: string;
+  scenario: string;
+  estimatedTimeMinutes: number;
+  cognitiveLevel: string;
+  rubric: RubricCriterion[];
+}
+
+/** A single question in a Check for Understanding */
+export interface GeneratedCheckQuestion {
   type: QuestionType;
   questionText: string;
   points: number;
-  // MC fields
   options?: MCOption[];
-  // DBQ fields
-  sourceDocument?: string;
-  sourceAttribution?: string;
-  scaffoldingQuestions?: string[];
-  // Constructed response / DBQ rubric
-  rubric?: RubricLevel[];
-  sampleAnswer?: string;
+  correctAnswer: string;
 }
 
-/** Full Claude API response for assessment generation */
-export interface GeneratedAssessment {
+/** Response from generateChecksForUnderstanding() */
+export interface GeneratedCheck {
+  title: string;
+  placementNote: string;
+  questions: GeneratedCheckQuestion[];
+}
+
+/** Response from generateLearningPlan() */
+export interface GeneratedActivity {
+  sequenceOrder: number;
   title: string;
   description: string;
-  questions: GeneratedQuestion[];
+  durationMinutes: number;
+  materials: string;
+  buildsToward: string;
+  associatedCheckTitle: string | null;
 }
 
-/** Question as stored in DB (includes id and order) */
-export interface Question extends GeneratedQuestion {
+// --- DB Record Types ---
+
+export interface Teacher {
   id: string;
-  assessmentId: string;
-  orderIndex: number;
+  sessionId: string;
+  email: string | null;
+  displayName: string | null;
+  gradeLevel: string | null;
+  subject: string | null;
+  state: string | null;
+  standardsFramework: string | null;
+  isDemo: boolean;
 }
 
-/** Assessment record */
-export interface Assessment {
+export interface Unit {
   id: string;
   teacherId: string;
   title: string;
-  description: string | null;
-  gradeLevel: string | null;
-  topic: string | null;
-  objectives: string | null;
-  topicsCovered: string | null;
-  sourcesUsed: string | null;
-  shareCode: string | null;
-  status: AssessmentStatus;
-  totalPoints: number;
+  enduringUnderstanding: string;
+  essentialQuestions: string[] | null;
+  standardCodes: string[] | null;
+  standardDescriptions: string[] | null;
+  cognitiveLevel: CognitiveLevel | null;
+  cognitiveLevelExplanation: string | null;
+  status: UnitStatus;
   createdAt: Date;
   updatedAt: Date;
 }
 
-/** Student submission */
-export interface StudentSubmission {
+export interface PerformanceTask {
   id: string;
-  assessmentId: string;
-  studentName: string;
-  classPeriod: string;
-  totalScore: number | null;
-  maxScore: number | null;
-  completedAt: Date;
+  unitId: string;
+  title: string;
+  description: string;
+  scenario: string;
+  rubric: RubricCriterion[];
+  standardCodes: string[] | null;
+  cognitiveLevel: CognitiveLevel | null;
+  estimatedTimeMinutes: number | null;
+  shareCode: string | null;
+  status: AssessmentStatus;
+  isSelected: boolean;
 }
 
-/** Individual student answer */
-export interface StudentAnswer {
+export interface CheckForUnderstanding {
   id: string;
-  submissionId: string;
-  questionId: string;
-  answer: string;
-  isCorrect: boolean | null;
-  score: number | null;
-  feedback: string | null;
+  unitId: string;
+  title: string;
+  placementNote: string | null;
+  shareCode: string | null;
+  status: AssessmentStatus;
+  totalPoints: number;
 }
 
-/** Public question for student quiz view (no correct answers) */
-export interface PublicQuestion {
+export interface CheckQuestion {
+  id: string;
+  checkId: string;
+  type: QuestionType;
+  orderIndex: number;
+  questionText: string;
+  points: number;
+  options: MCOption[] | null;
+  correctAnswer: string | null;
+}
+
+export interface LearningActivity {
+  id: string;
+  unitId: string;
+  sequenceOrder: number;
+  title: string;
+  description: string;
+  durationMinutes: number | null;
+  materials: string | null;
+  buildsToward: string | null;
+  associatedCheckId: string | null;
+}
+
+// --- Public Types (for student-facing views) ---
+
+export interface PublicCheckQuestion {
   id: string;
   type: QuestionType;
   orderIndex: number;
   questionText: string;
   points: number;
-  options?: { text: string }[]; // MC options without isCorrect
-  sourceDocument?: string;
-  sourceAttribution?: string;
-  scaffoldingQuestions?: string[];
+  options?: { text: string }[]; // stripped of isCorrect
 }
 
-/** Results dashboard data */
-export interface AssessmentResults {
-  assessment: {
-    id: string;
-    title: string;
-    totalPoints: number;
-    questionCount: number;
-  };
-  submissions: Array<{
-    id: string;
-    studentName: string;
-    classPeriod: string;
-    totalScore: number | null;
-    maxScore: number | null;
-    completedAt: Date;
-    answers: Array<{
-      questionId: string;
-      questionText: string;
-      questionType: QuestionType;
-      answer: string;
-      isCorrect: boolean | null;
-      score: number | null;
-      feedback: string | null;
-      maxPoints: number;
-    }>;
-  }>;
-  analytics: {
-    averageScore: number;
-    highScore: number;
-    lowScore: number;
-    submissionCount: number;
-    questionBreakdown: Array<{
-      questionId: string;
-      questionText: string;
-      questionType: QuestionType;
-      averageScore: number;
-      percentCorrect: number;
-      maxPoints: number;
-    }>;
-  };
-}
+// --- Classroom Setup ---
 
-/** Chat message in the conversation flow */
-export interface ChatMessage {
-  id: string;
-  role: "assistant" | "user";
-  content: string;
-  /** For assistant messages that include a form input */
-  inputType?: "text" | "textarea" | "select";
-  inputOptions?: string[];
-  inputPlaceholder?: string;
-  /** The field this message collects data for */
-  field?: keyof AssessmentInput;
+export interface ClassroomContext {
+  gradeLevel: string;
+  subject: string;
+  state: string;
 }

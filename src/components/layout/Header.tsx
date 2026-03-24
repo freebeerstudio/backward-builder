@@ -8,9 +8,9 @@ function Header() {
         <Link href="/" className="text-xl font-heading font-bold text-forest hover:text-forest-light">
           Backward Builder
         </Link>
-        <Link href="/create">
+        <Link href="/setup">
           <Button variant="accent" size="sm">
-            Create Assessment
+            Design a Unit
           </Button>
         </Link>
       </div>

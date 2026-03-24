@@ -13,90 +13,165 @@ import {
 // --- Enums ---
 
 export const questionTypeEnum = pgEnum("question_type", [
-  "multiple_choice",
-  "document_based",
-  "constructed_response",
+  "selected_response",
+  "short_answer",
+]);
+
+export const unitStatusEnum = pgEnum("unit_status", [
+  "stage1",
+  "stage2",
+  "stage3",
+  "complete",
 ]);
 
 export const assessmentStatusEnum = pgEnum("assessment_status", [
   "draft",
-  "published",
-  "archived",
+  "live",
+  "closed",
+]);
+
+export const submissionTypeEnum = pgEnum("submission_type", [
+  "check",
+  "performance_task",
+]);
+
+export const cognitiveLevelEnum = pgEnum("cognitive_level", [
+  "remember",
+  "understand",
+  "apply",
+  "analyze",
+  "evaluate",
+  "create",
 ]);
 
 // --- Tables ---
 
 /**
- * Teachers are identified by a cookie-based session ID.
- * No login required — this keeps the UX frictionless for the contest.
+ * Teachers — identified by session cookie, with classroom context.
+ * Simple email auth with a demo bypass for judges.
  */
 export const teachers = pgTable("teachers", {
   id: uuid("id").defaultRandom().primaryKey(),
   sessionId: varchar("session_id", { length: 64 }).notNull().unique(),
+  email: varchar("email", { length: 255 }),
   displayName: varchar("display_name", { length: 100 }),
+  gradeLevel: varchar("grade_level", { length: 20 }),
+  subject: varchar("subject", { length: 100 }),
+  state: varchar("state", { length: 50 }),
+  standardsFramework: varchar("standards_framework", { length: 100 }),
+  isDemo: boolean("is_demo").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 /**
- * Core assessment record — stores the teacher's input and metadata.
- * The conversationHistory field preserves the full chat flow for context.
+ * Units — the top-level entity in UbD. Everything hangs off a unit.
+ * A unit has one enduring understanding and flows through 3 stages.
  */
-export const assessments = pgTable("assessments", {
+export const units = pgTable("units", {
   id: uuid("id").defaultRandom().primaryKey(),
   teacherId: uuid("teacher_id")
     .notNull()
     .references(() => teachers.id),
   title: varchar("title", { length: 255 }).notNull(),
-  description: text("description"),
-  gradeLevel: varchar("grade_level", { length: 20 }),
-  topic: varchar("topic", { length: 255 }),
-  unitLength: varchar("unit_length", { length: 50 }),
-  objectives: text("objectives"),
-  topicsCovered: text("topics_covered"),
-  sourcesUsed: text("sources_used"),
-  shareCode: varchar("share_code", { length: 8 }).unique(),
-  status: assessmentStatusEnum("status").default("draft").notNull(),
-  totalPoints: integer("total_points").default(0),
-  conversationHistory: jsonb("conversation_history"),
+  enduringUnderstanding: text("enduring_understanding").notNull(),
+  essentialQuestions: jsonb("essential_questions"), // string[]
+  standardCodes: jsonb("standard_codes"), // string[]
+  standardDescriptions: jsonb("standard_descriptions"), // string[]
+  cognitiveLevel: cognitiveLevelEnum("cognitive_level"),
+  cognitiveLevelExplanation: text("cognitive_level_explanation"),
+  status: unitStatusEnum("status").default("stage1").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 /**
- * Individual questions within an assessment.
- * Supports three types: multiple choice, document-based, and constructed response.
- * The options/rubric fields use JSONB for flexible storage of type-specific data.
+ * Performance Tasks — summative, transfer-level assessments.
+ * Each includes a GRASPS scenario and a multi-criterion rubric.
  */
-export const questions = pgTable("questions", {
+export const performanceTasks = pgTable("performance_tasks", {
   id: uuid("id").defaultRandom().primaryKey(),
-  assessmentId: uuid("assessment_id")
+  unitId: uuid("unit_id")
     .notNull()
-    .references(() => assessments.id, { onDelete: "cascade" }),
-  type: questionTypeEnum("type").notNull(),
-  orderIndex: integer("order_index").notNull(),
-  questionText: text("question_text").notNull(),
-  points: integer("points").notNull().default(1),
-  // Multiple choice fields
-  options: jsonb("options"), // MCOption[] — [{text, isCorrect}]
-  // Document-based question fields
-  sourceDocument: text("source_document"),
-  sourceAttribution: varchar("source_attribution", { length: 255 }),
-  scaffoldingQuestions: jsonb("scaffolding_questions"), // string[]
-  // Constructed response / DBQ rubric
-  rubric: jsonb("rubric"), // RubricLevel[] — [{score, description}]
-  sampleAnswer: text("sample_answer"),
+    .references(() => units.id, { onDelete: "cascade" }),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description").notNull(),
+  scenario: text("scenario").notNull(),
+  rubric: jsonb("rubric").notNull(), // RubricCriterion[]
+  standardCodes: jsonb("standard_codes"),
+  cognitiveLevel: cognitiveLevelEnum("cognitive_level"),
+  estimatedTimeMinutes: integer("estimated_time_minutes"),
+  shareCode: varchar("share_code", { length: 8 }).unique(),
+  status: assessmentStatusEnum("status").default("draft").notNull(),
+  isSelected: boolean("is_selected").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 /**
- * A student's submission to an assessment.
- * Students are identified by name and class period (no auth).
+ * Checks for Understanding — formative assessments embedded in the unit.
+ * UbD terminology: never call these "quizzes."
+ */
+export const checksForUnderstanding = pgTable("checks_for_understanding", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  unitId: uuid("unit_id")
+    .notNull()
+    .references(() => units.id, { onDelete: "cascade" }),
+  title: varchar("title", { length: 255 }).notNull(),
+  placementNote: text("placement_note"),
+  shareCode: varchar("share_code", { length: 8 }).unique(),
+  status: assessmentStatusEnum("status").default("draft").notNull(),
+  totalPoints: integer("total_points").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+/**
+ * Questions within a Check for Understanding.
+ * Supports selected-response (MC) and short-answer types.
+ */
+export const checkQuestions = pgTable("check_questions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  checkId: uuid("check_id")
+    .notNull()
+    .references(() => checksForUnderstanding.id, { onDelete: "cascade" }),
+  type: questionTypeEnum("type").notNull(),
+  orderIndex: integer("order_index").notNull(),
+  questionText: text("question_text").notNull(),
+  points: integer("points").notNull().default(1),
+  options: jsonb("options"), // MCOption[] for selected_response
+  correctAnswer: text("correct_answer"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+/**
+ * Learning Activities — sequenced instructional activities for Stage 3.
+ * Each activity builds toward a specific rubric criterion.
+ */
+export const learningActivities = pgTable("learning_activities", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  unitId: uuid("unit_id")
+    .notNull()
+    .references(() => units.id, { onDelete: "cascade" }),
+  sequenceOrder: integer("sequence_order").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description").notNull(),
+  durationMinutes: integer("duration_minutes"),
+  materials: text("materials"),
+  buildsToward: text("builds_toward"),
+  associatedCheckId: uuid("associated_check_id").references(
+    () => checksForUnderstanding.id
+  ),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+/**
+ * Student submissions — polymorphic, works for both checks and performance tasks.
  */
 export const studentSubmissions = pgTable("student_submissions", {
   id: uuid("id").defaultRandom().primaryKey(),
-  assessmentId: uuid("assessment_id")
+  unitId: uuid("unit_id")
     .notNull()
-    .references(() => assessments.id),
+    .references(() => units.id),
+  assessmentType: submissionTypeEnum("assessment_type").notNull(),
+  assessmentId: uuid("assessment_id").notNull(),
   studentName: varchar("student_name", { length: 100 }).notNull(),
   classPeriod: varchar("class_period", { length: 20 }).notNull(),
   totalScore: integer("total_score"),
@@ -105,18 +180,15 @@ export const studentSubmissions = pgTable("student_submissions", {
 });
 
 /**
- * Individual answers within a student submission.
- * MC answers are auto-graded immediately; CR/DBQ answers
- * are graded by Claude and include AI-generated feedback.
+ * Individual answers within a submission.
+ * MC auto-graded immediately; short answer stored for review.
  */
 export const studentAnswers = pgTable("student_answers", {
   id: uuid("id").defaultRandom().primaryKey(),
   submissionId: uuid("submission_id")
     .notNull()
     .references(() => studentSubmissions.id, { onDelete: "cascade" }),
-  questionId: uuid("question_id")
-    .notNull()
-    .references(() => questions.id),
+  questionId: uuid("question_id").notNull(),
   answer: text("answer").notNull(),
   isCorrect: boolean("is_correct"),
   score: integer("score"),

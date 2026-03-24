@@ -1,0 +1,112 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { db } from "@/db";
+import {
+  units,
+  performanceTasks,
+  checksForUnderstanding,
+  learningActivities,
+} from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { Header } from "@/components/layout/Header";
+import { PageContainer } from "@/components/layout/PageContainer";
+import { UbDProgressIndicator } from "@/components/unit/UbDProgressIndicator";
+import { UnitOverview } from "@/components/unit/UnitOverview";
+import type { CognitiveLevel } from "@/types";
+
+interface UnitPageProps {
+  params: Promise<{ id: string }>;
+}
+
+export async function generateMetadata({ params }: UnitPageProps): Promise<Metadata> {
+  const { id } = await params;
+  const [unit] = await db
+    .select({ title: units.title })
+    .from(units)
+    .where(eq(units.id, id))
+    .limit(1);
+
+  return {
+    title: unit ? unit.title : "Unit Not Found",
+  };
+}
+
+export default async function UnitPage({ params }: UnitPageProps) {
+  const { id } = await params;
+
+  // Fetch unit and related data in parallel
+  const [unitRows, tasks, checks, activities] = await Promise.all([
+    db.select().from(units).where(eq(units.id, id)).limit(1),
+    db
+      .select({ id: performanceTasks.id })
+      .from(performanceTasks)
+      .where(eq(performanceTasks.unitId, id))
+      .limit(1),
+    db
+      .select({ id: checksForUnderstanding.id })
+      .from(checksForUnderstanding)
+      .where(eq(checksForUnderstanding.unitId, id))
+      .limit(1),
+    db
+      .select({ id: learningActivities.id })
+      .from(learningActivities)
+      .where(eq(learningActivities.unitId, id))
+      .limit(1),
+  ]);
+
+  const unit = unitRows[0];
+  if (!unit) {
+    notFound();
+  }
+
+  const hasTasks = tasks.length > 0;
+  const hasChecks = checks.length > 0;
+  const hasActivities = activities.length > 0;
+
+  // Determine current stage and completed stages
+  const completedStages: number[] = [1];
+  if (hasTasks && hasChecks) completedStages.push(2);
+  if (hasActivities) completedStages.push(3);
+
+  let currentStage: 1 | 2 | 3 = 1;
+  if (hasActivities) currentStage = 3;
+  else if (hasTasks && hasChecks) currentStage = 2;
+
+  // Serialize unit data for the client component
+  const unitData = {
+    id: unit.id,
+    title: unit.title,
+    enduringUnderstanding: unit.enduringUnderstanding,
+    essentialQuestions: unit.essentialQuestions as string[] | null,
+    standardCodes: unit.standardCodes as string[] | null,
+    standardDescriptions: unit.standardDescriptions as string[] | null,
+    cognitiveLevel: unit.cognitiveLevel as CognitiveLevel | null,
+    cognitiveLevelExplanation: unit.cognitiveLevelExplanation,
+    status: unit.status,
+  };
+
+  return (
+    <>
+      <Header />
+      <main className="flex-1 py-8">
+        <PageContainer>
+          {/* Progress indicator */}
+          <div className="mb-8">
+            <UbDProgressIndicator
+              currentStage={currentStage}
+              completedStages={completedStages}
+            />
+          </div>
+
+          {/* Unit overview with 3-stage cards */}
+          <UnitOverview
+            unit={unitData}
+            hasTasks={hasTasks}
+            hasChecks={hasChecks}
+            hasActivities={hasActivities}
+          />
+        </PageContainer>
+      </main>
+    </>
+  );
+}
