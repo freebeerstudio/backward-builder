@@ -539,7 +539,7 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities, isOwner = true
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => guardedAction(() => router.push(`/unit/${unit.id}/publish`))}
+                    onClick={() => guardedAction(() => window.open(`/unit/${unit.id}/publish`, '_blank'))}
                   >
                     View QR Codes & Share Links
                   </Button>
@@ -556,7 +556,7 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities, isOwner = true
                   <Button
                     variant="primary"
                     size="md"
-                    onClick={() => router.push(`/unit/${unit.id}/publish`)}
+                    onClick={() => window.open(`/unit/${unit.id}/publish`, '_blank')}
                   >
                     Go Live →
                   </Button>

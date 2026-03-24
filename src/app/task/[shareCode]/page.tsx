@@ -399,7 +399,7 @@ export default function StudentTaskPage() {
               [
                 { key: "write" as SubmissionTab, label: "Write Here" },
                 { key: "upload" as SubmissionTab, label: "Upload File" },
-                { key: "link" as SubmissionTab, label: "Paste a Link" },
+                { key: "link" as SubmissionTab, label: "Google / Link" },
               ] as const
             ).map((tab) => (
               <button
@@ -509,14 +509,40 @@ export default function StudentTaskPage() {
           </div>
         )}
 
-        {/* Link tab */}
+        {/* Link tab — Google Workspace forward */}
         {activeTab === "link" && (
           <div className="space-y-3">
+            {/* Google Workspace quick links */}
+            {!linkContent.trim() && (
+              <div className="rounded-xl border border-border bg-white p-4">
+                <p className="text-xs font-heading font-semibold text-text-light uppercase tracking-wider mb-3">
+                  Link your Google Workspace document
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { icon: "📄", label: "Google Docs", hint: "docs.google.com/document/..." },
+                    { icon: "📊", label: "Google Slides", hint: "docs.google.com/presentation/..." },
+                    { icon: "📋", label: "Google Sheets", hint: "docs.google.com/spreadsheets/..." },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      className="rounded-lg border border-border/50 bg-warmwhite p-2.5 text-center"
+                    >
+                      <span className="text-xl">{item.icon}</span>
+                      <p className="text-[11px] font-heading font-medium text-text mt-1">{item.label}</p>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-text-light/70 font-body mt-3">
+                  Or paste any other shareable link below.
+                </p>
+              </div>
+            )}
             <input
               type="url"
               value={linkContent}
               onChange={(e) => setLinkContent(e.target.value)}
-              placeholder="https://docs.google.com/..."
+              placeholder="Paste your Google Doc, Slides, or Sheets link here..."
               className="w-full rounded-xl border-2 border-border bg-white px-4 py-3 text-base font-body
                 text-text placeholder:text-text-light/50
                 focus:outline-none focus:ring-2 focus:ring-forest/30 focus:border-forest
