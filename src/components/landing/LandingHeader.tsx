@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ButterflyLogo } from "@/components/ui/ButterflyLogo";
@@ -17,13 +17,43 @@ interface LandingHeaderProps {
  *
  * Unauthenticated: Sign in / Sign up buttons that open the AuthModal
  * Authenticated: Teacher name + avatar + logout dropdown
+ *
+ * Listens for a custom "auth-changed" event so the header updates
+ * immediately when the user authenticates via the chat box modal
+ * (without waiting for a full page reload).
  */
-export function LandingHeader({ isAuthenticated, teacherName, teacherInitial }: LandingHeaderProps) {
+export function LandingHeader({ isAuthenticated: serverAuth, teacherName: serverName, teacherInitial: serverInitial }: LandingHeaderProps) {
   const router = useRouter();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<"signup" | "signin">("signup");
   const [showDropdown, setShowDropdown] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+
+  /* Local auth state that can be updated client-side */
+  const [isAuthenticated, setIsAuthenticated] = useState(serverAuth);
+  const [teacherName, setTeacherName] = useState(serverName);
+  const [teacherInitial, setTeacherInitial] = useState(serverInitial);
+
+  /* Sync with server props if they change (e.g., after router.refresh) */
+  useEffect(() => {
+    setIsAuthenticated(serverAuth);
+    setTeacherName(serverName);
+    setTeacherInitial(serverInitial);
+  }, [serverAuth, serverName, serverInitial]);
+
+  /* Listen for auth changes from sibling components (e.g., HeroChatBox) */
+  useEffect(() => {
+    function handleAuthChanged(e: Event) {
+      const detail = (e as CustomEvent).detail;
+      if (detail) {
+        setIsAuthenticated(true);
+        setTeacherName(detail.displayName || "Teacher");
+        setTeacherInitial((detail.displayName?.[0] || "T").toUpperCase());
+      }
+    }
+    window.addEventListener("auth-changed", handleAuthChanged);
+    return () => window.removeEventListener("auth-changed", handleAuthChanged);
+  }, []);
 
   async function handleLogout() {
     setLoggingOut(true);

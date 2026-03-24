@@ -199,10 +199,16 @@ export function HeroChatBox() {
     createUnit();
   }
 
-  /** Called when auth modal succeeds */
-  function handleAuthSuccess() {
+  /** Called when auth modal succeeds (signup, signin, or demo) */
+  function handleAuthSuccess(teacher: { teacherId: string; displayName: string }) {
     setShowAuthModal(false);
     setIsAuthenticated(true);
+
+    // Notify the header to update immediately (without page reload)
+    window.dispatchEvent(
+      new CustomEvent("auth-changed", { detail: teacher })
+    );
+
     // Continue with unit creation
     createUnit();
   }
