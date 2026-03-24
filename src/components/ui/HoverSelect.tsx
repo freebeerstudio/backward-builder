@@ -196,7 +196,7 @@ export function HoverSelect({
           ref={listRef}
           role="listbox"
           aria-label={ariaLabel}
-          className="absolute left-0 top-full z-50 mt-1 max-h-56 min-w-[160px] overflow-y-auto rounded-xl border border-ruled bg-paper py-1 shadow-lg"
+          className="absolute left-0 top-full z-[200] mt-1 max-h-56 min-w-[160px] overflow-y-auto rounded-xl border border-ruled bg-paper py-1 shadow-lg"
         >
           {options.map((opt, i) => {
             const label = labels?.[i] || opt;
