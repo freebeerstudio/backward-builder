@@ -32,6 +32,10 @@ interface UnitOverviewProps {
   isAuthenticated?: boolean;
   /** Display name of the unit author */
   authorName?: string;
+  /** Classroom context — shown as pill tags below the title */
+  gradeLevel?: string | null;
+  subject?: string | null;
+  state?: string | null;
 }
 
 const COGNITIVE_LEVEL_LABELS: Record<CognitiveLevel, string> = {
@@ -98,7 +102,7 @@ function StageCircle({
  * Academic editorial design: ink navy headers, paper-white cards with
  * ruled borders, serif display font for the title, clean typography.
  */
-function UnitOverview({ unit, hasTasks, hasChecks, hasActivities, isOwner = true, isAuthenticated = true, authorName }: UnitOverviewProps) {
+function UnitOverview({ unit, hasTasks, hasChecks, hasActivities, isOwner = true, isAuthenticated = true, authorName, gradeLevel, subject, state }: UnitOverviewProps) {
   const router = useRouter();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
@@ -177,6 +181,15 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities, isOwner = true
             </span>
           )}
         </div>
+
+        {/* Classroom context line */}
+        {(gradeLevel || subject || state) && (
+          <p className="font-ui text-xs text-pencil/70 italic mb-2">
+            Based on the{state ? ` ${state}` : ""}{" "}
+            {subject ? `state standards for ${gradeLevel ? `${gradeLevel.toLowerCase()} ` : ""}${subject.toLowerCase()}` : gradeLevel || ""}
+          </p>
+        )}
+
         <p className="font-ui text-sm text-pencil leading-relaxed md:text-base">
           {unit.enduringUnderstanding}
         </p>

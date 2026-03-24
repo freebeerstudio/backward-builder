@@ -74,6 +74,7 @@ export default async function UnitPage({ params }: UnitPageProps) {
       id: teachers.id,
       sessionId: teachers.sessionId,
       displayName: teachers.displayName,
+      gradeLevel: teachers.gradeLevel,
       state: teachers.state,
       subject: teachers.subject,
     })
@@ -144,6 +145,9 @@ export default async function UnitPage({ params }: UnitPageProps) {
             isOwner={isOwner}
             isAuthenticated={isAuthenticated}
             authorName={teacher?.displayName || "Teacher"}
+            gradeLevel={teacher?.gradeLevel || null}
+            subject={teacher?.subject || null}
+            state={teacher?.state || null}
           />
         </div>
       </main>
