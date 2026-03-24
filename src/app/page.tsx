@@ -46,7 +46,7 @@ export default function Home() {
         </p>
         <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
           <Link
-            href="/setup?demo=true"
+            href="/api/demo"
             className="group relative inline-flex items-center gap-2 rounded-lg bg-gold px-8 py-3.5 font-heading text-base font-semibold text-forest-dark shadow-sm transition-all hover:bg-gold-light hover:shadow-md"
           >
             <svg
@@ -205,7 +205,7 @@ export default function Home() {
           </p>
           <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
             <Link
-              href="/setup?demo=true"
+              href="/api/demo"
               className="inline-flex items-center gap-2 rounded-lg bg-gold px-8 py-3.5 font-heading text-base font-semibold text-forest-dark shadow-sm transition-all hover:bg-gold-light hover:shadow-md"
             >
               <svg

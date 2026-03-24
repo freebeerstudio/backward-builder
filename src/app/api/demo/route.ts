@@ -1,0 +1,55 @@
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
+import { db } from "@/db";
+import { teachers } from "@/db/schema";
+import { eq } from "drizzle-orm";
+
+const DEMO_SESSION_ID = "demo-mrs-crabapple";
+
+/**
+ * GET /api/demo — Demo bypass for judges and visitors.
+ *
+ * Sets the teacher_session cookie to the demo teacher's session ID
+ * and redirects to the dashboard so they can see both pre-seeded units.
+ * If the demo teacher doesn't exist yet, returns a helpful message.
+ */
+export async function GET(request: Request) {
+  // Check that the demo teacher exists in the database
+  const [demoTeacher] = await db
+    .select({ id: teachers.id })
+    .from(teachers)
+    .where(eq(teachers.sessionId, DEMO_SESSION_ID))
+    .limit(1);
+
+  if (!demoTeacher) {
+    return new NextResponse(
+      `<html>
+        <body style="font-family: system-ui; max-width: 480px; margin: 80px auto; text-align: center;">
+          <h1>Demo data not found</h1>
+          <p>The demo teacher hasn't been seeded yet. Run:</p>
+          <pre style="background: #f3f4f6; padding: 12px; border-radius: 8px;">npm run db:seed</pre>
+          <p>Then try again.</p>
+          <a href="/" style="color: #2d6a4f;">Back to home</a>
+        </body>
+      </html>`,
+      {
+        status: 404,
+        headers: { "Content-Type": "text/html" },
+      }
+    );
+  }
+
+  // Set the teacher session cookie
+  const cookieStore = await cookies();
+  cookieStore.set("teacher_session", DEMO_SESSION_ID, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 60 * 24 * 365, // 1 year
+    path: "/",
+  });
+
+  // Redirect to the dashboard so the judge sees both units
+  const url = new URL("/dashboard", request.url);
+  return NextResponse.redirect(url);
+}
