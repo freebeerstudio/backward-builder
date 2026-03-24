@@ -256,18 +256,15 @@ export function HeroChatBox() {
             />
           </div>
 
-          {/* Divider */}
-          <div className="mx-4 border-t border-ruled/60 sm:mx-5" />
-
           {/* Bottom bar: dropdowns + submit */}
-          <div className="flex flex-wrap items-center gap-2 p-3 sm:gap-3 sm:p-4">
+          <div className="flex flex-wrap items-center gap-2 px-4 pb-3 sm:gap-3 sm:px-5 sm:pb-4">
             {/* Grade selector */}
             <select
               value={grade}
               onChange={(e) => setGrade(e.target.value)}
               disabled={isLoading}
               aria-label="Grade level"
-              className="focus-ring h-9 rounded-lg border border-ruled bg-cream px-3 font-ui text-xs font-medium text-graphite transition hover:border-ink-muted focus:border-ink sm:text-sm"
+              className="focus-ring h-8 appearance-none rounded-md bg-transparent px-1 font-ui text-xs font-medium text-pencil transition hover:text-graphite focus:text-graphite disabled:opacity-50 sm:text-sm cursor-pointer"
             >
               <option value="">Grade</option>
               {GRADES.map((g) => (
@@ -276,12 +273,14 @@ export function HeroChatBox() {
             </select>
 
             {/* Subject selector */}
+            <span className="text-pencil/30">·</span>
+
             <select
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               disabled={isLoading}
               aria-label="Subject area"
-              className="focus-ring h-9 rounded-lg border border-ruled bg-cream px-3 font-ui text-xs font-medium text-graphite transition hover:border-ink-muted focus:border-ink sm:text-sm"
+              className="focus-ring h-8 appearance-none rounded-md bg-transparent px-1 font-ui text-xs font-medium text-pencil transition hover:text-graphite focus:text-graphite disabled:opacity-50 sm:text-sm cursor-pointer"
             >
               <option value="">Subject</option>
               {SUBJECTS.map((s) => (
@@ -289,13 +288,15 @@ export function HeroChatBox() {
               ))}
             </select>
 
+            <span className="text-pencil/30">·</span>
+
             {/* State selector */}
             <select
               value={state}
               onChange={(e) => setState(e.target.value)}
               disabled={isLoading}
               aria-label="State standards"
-              className="focus-ring h-9 rounded-lg border border-ruled bg-cream px-3 font-ui text-xs font-medium text-graphite transition hover:border-ink-muted focus:border-ink sm:text-sm"
+              className="focus-ring h-8 appearance-none rounded-md bg-transparent px-1 font-ui text-xs font-medium text-pencil transition hover:text-graphite focus:text-graphite disabled:opacity-50 sm:text-sm cursor-pointer"
             >
               <option value="">State</option>
               {STATES.map((s) => (
