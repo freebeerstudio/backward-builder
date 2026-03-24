@@ -14,6 +14,12 @@ export interface VerifiedStandard {
   description: string;
   /** URL to the authoritative source (or null if no web-accessible source) */
   url: string | null;
+  /** Title of the standard set (e.g., "Missouri Science Standards") — from CSP */
+  setTitle?: string;
+  /** Subject area (e.g., "Science", "Mathematics") — from CSP */
+  setSubject?: string;
+  /** Education levels covered (e.g., ["06", "07", "08"]) — from CSP */
+  setEducationLevels?: string[];
 }
 
 /** A standards framework with its metadata and standards */

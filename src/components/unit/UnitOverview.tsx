@@ -16,6 +16,9 @@ interface UnitData {
   standardCodes: string[] | null;
   standardDescriptions: string[] | null;
   standardUrls: string[] | null;
+  standardSetTitles: (string | null)[] | null;
+  standardSetSubjects: (string | null)[] | null;
+  standardSetLevels: (string[] | null)[] | null;
   cognitiveLevel: CognitiveLevel | null;
   cognitiveLevelExplanation: string | null;
   status: string;
@@ -215,7 +218,9 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities, isOwner = true
                   key={code}
                   code={code}
                   description={unit.standardDescriptions?.[i] || ""}
-                  url={unit.standardUrls?.[i]}
+                  setTitle={unit.standardSetTitles?.[i]}
+                  setSubject={unit.standardSetSubjects?.[i]}
+                  setEducationLevels={unit.standardSetLevels?.[i]}
                 />
               ))}
             </div>

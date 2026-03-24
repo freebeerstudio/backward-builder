@@ -274,12 +274,19 @@ async function fetchStandardSet(setId: string): Promise<VerifiedStandard[]> {
   const data = await fetchCSP<{ data: CSPStandardSetFull }>(`/standard_sets/${setId}`);
   if (!data?.data?.standards) return [];
 
+  const setTitle = data.data.title;
+  const setSubject = data.data.subject;
+  const setEducationLevels = data.data.educationLevels;
+
   const standards: VerifiedStandard[] = Object.values(data.data.standards)
     .filter((s) => s.statementNotation && s.description) // Must have a code
     .map((s) => ({
       code: s.statementNotation!,
       description: s.description.replace(/<[^>]*>/g, "").trim(), // Strip HTML tags
       url: null, // CSP doesn't provide source URLs — we resolve separately
+      setTitle,
+      setSubject,
+      setEducationLevels,
     }))
     .sort((a, b) => a.code.localeCompare(b.code));
 

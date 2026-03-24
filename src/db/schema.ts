@@ -78,6 +78,9 @@ export const units = pgTable("units", {
   standardCodes: jsonb("standard_codes"), // string[]
   standardDescriptions: jsonb("standard_descriptions"), // string[]
   standardUrls: jsonb("standard_urls"), // string[] — links to authoritative source for each standard
+  standardSetTitles: jsonb("standard_set_titles"), // string[] — CSP set title per standard
+  standardSetSubjects: jsonb("standard_set_subjects"), // string[] — CSP subject per standard
+  standardSetLevels: jsonb("standard_set_levels"), // string[][] — CSP education levels per standard
   cognitiveLevel: cognitiveLevelEnum("cognitive_level"),
   cognitiveLevelExplanation: text("cognitive_level_explanation"),
   status: unitStatusEnum("status").default("stage1").notNull(),

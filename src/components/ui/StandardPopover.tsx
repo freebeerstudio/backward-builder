@@ -7,53 +7,93 @@ interface StandardPopoverProps {
   code: string;
   /** Full description text of the standard */
   description: string;
-  /** Optional URL to the authoritative source */
-  url?: string | null;
+  /** Title of the standard set from CSP (e.g., "Missouri Mathematics") */
+  setTitle?: string | null;
+  /** Subject area from CSP (e.g., "Science", "Mathematics") */
+  setSubject?: string | null;
+  /** Education levels from CSP (e.g., ["06", "07", "08"]) */
+  setEducationLevels?: string[] | null;
 }
 
 /**
- * Infer the framework display name from the standard code prefix.
+ * Format education levels into a readable string.
  *
- * We detect this client-side from the code pattern rather than requiring
- * a server round-trip to the standards database. Covers the three framework
- * families in our verified database: NGSS, Common Core ELA, Common Core Math.
+ * CSP returns levels like ["06", "07", "08"] or ["Pre-K", "K", "01", "02"].
+ * We convert these to "Grades 6–8" or "Pre-K – Grade 2" for display.
  */
-function inferFramework(code: string): string {
-  if (code.startsWith("MS-") || code.startsWith("HS-")) return "NGSS";
-  if (code.startsWith("CCSS.ELA")) return "Common Core ELA";
-  if (code.startsWith("CCSS.Math") || code.startsWith("CCSS.MATH")) return "Common Core Math";
-  // State-specific standards from Common Standards Project
-  if (code.includes("ELA") || code.includes("RL.") || code.includes("RI.") || code.includes("W.") || code.includes("RH.")) return "ELA Standard";
-  if (code.includes("Math") || code.includes("MATH")) return "Math Standard";
-  return "State Standard";
+function formatEducationLevels(levels: string[]): string {
+  if (!levels || levels.length === 0) return "";
+
+  // Sort and deduplicate
+  const sorted = [...new Set(levels)].sort((a, b) => {
+    if (a === "Pre-K") return -1;
+    if (b === "Pre-K") return 1;
+    if (a === "K") return b === "Pre-K" ? 1 : -1;
+    if (b === "K") return a === "Pre-K" ? -1 : 1;
+    return parseInt(a) - parseInt(b);
+  });
+
+  const formatOne = (level: string): string => {
+    if (level === "Pre-K") return "Pre-K";
+    if (level === "K") return "Kindergarten";
+    const num = parseInt(level);
+    if (!isNaN(num)) return `Grade ${num}`;
+    return level;
+  };
+
+  if (sorted.length === 1) return formatOne(sorted[0]);
+
+  // If consecutive, show as range
+  const first = sorted[0];
+  const last = sorted[sorted.length - 1];
+
+  const firstNum = first === "Pre-K" ? -1 : first === "K" ? 0 : parseInt(first);
+  const lastNum = last === "Pre-K" ? -1 : last === "K" ? 0 : parseInt(last);
+
+  if (!isNaN(firstNum) && !isNaN(lastNum) && lastNum - firstNum === sorted.length - 1) {
+    // Consecutive range
+    if (firstNum > 0 && lastNum > 0) return `Grades ${firstNum}–${lastNum}`;
+    return `${formatOne(first)} – ${formatOne(last)}`;
+  }
+
+  // Non-consecutive, list them
+  return sorted.map(formatOne).join(", ");
 }
 
 /**
  * StandardPopover — an inline popover card for standard code badges.
  *
- * Replaces the previous external-link behavior with an accessible popover
- * that shows the standard's details (code, framework, description) without
- * leaving the page. A "View source" link still provides access to the
- * authoritative external URL when available.
+ * Shows the standard's details from the Common Standards Project:
+ * - Set title (e.g., "Missouri Mathematics")
+ * - Subject area
+ * - Education levels (grades)
+ * - Standard code and full description
  *
- * Positioning: auto-detects whether to show above or below the badge
- * based on available viewport space. Closes on outside click or Escape.
+ * No external links — all information is displayed inline.
+ * Positioning auto-detects above/below. Closes on outside click or Escape.
  */
-function StandardPopover({ code, description, url }: StandardPopoverProps) {
+function StandardPopover({
+  code,
+  description,
+  setTitle,
+  setSubject,
+  setEducationLevels,
+}: StandardPopoverProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [position, setPosition] = useState<"above" | "below">("below");
   const badgeRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
 
-  const framework = inferFramework(code);
+  const educationLabel = setEducationLevels?.length
+    ? formatEducationLevels(setEducationLevels)
+    : null;
 
   /** Calculate whether the popover should appear above or below */
   const updatePosition = useCallback(() => {
     if (!badgeRef.current) return;
     const rect = badgeRef.current.getBoundingClientRect();
-    // If less than 200px below the badge, show above
     const spaceBelow = window.innerHeight - rect.bottom;
-    setPosition(spaceBelow < 200 ? "above" : "below");
+    setPosition(spaceBelow < 240 ? "above" : "below");
   }, []);
 
   /** Close on outside click */
@@ -90,7 +130,7 @@ function StandardPopover({ code, description, url }: StandardPopoverProps) {
 
   return (
     <span className="relative inline-block">
-      {/* Badge button — same visual style as the previous <a>/<span> badges */}
+      {/* Badge button */}
       <button
         ref={badgeRef}
         type="button"
@@ -106,7 +146,6 @@ function StandardPopover({ code, description, url }: StandardPopoverProps) {
         `}
       >
         {code}
-        {/* Small info icon to hint at click behavior */}
         <svg
           className="ml-1 inline-block h-3 w-3 opacity-40"
           fill="none"
@@ -129,7 +168,7 @@ function StandardPopover({ code, description, url }: StandardPopoverProps) {
           role="dialog"
           aria-label={`Standard ${code} details`}
           className={`
-            absolute z-50 w-[320px]
+            absolute z-50 w-[340px]
             rounded-lg border border-ruled bg-paper
             shadow-[0_4px_16px_rgba(27,42,74,0.12)]
             p-4
@@ -137,14 +176,35 @@ function StandardPopover({ code, description, url }: StandardPopoverProps) {
             left-0
           `}
         >
-          {/* Standard code */}
-          <p className="font-mono text-sm font-bold text-ink mb-1">
-            {code}
-          </p>
+          {/* Header: Set title, subject, education level */}
+          {setTitle && (
+            <h4 className="font-display text-sm font-semibold text-ink leading-snug mb-1">
+              {setTitle}
+            </h4>
+          )}
 
-          {/* Framework badge */}
-          <p className="font-ui text-[11px] font-semibold uppercase tracking-wider text-pencil mb-3">
-            {framework}
+          {/* Subject and grade metadata pills */}
+          {(setSubject || educationLabel) && (
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              {setSubject && (
+                <span className="rounded-full bg-chalk px-2.5 py-0.5 font-ui text-[11px] font-medium text-graphite">
+                  {setSubject}
+                </span>
+              )}
+              {educationLabel && (
+                <span className="rounded-full bg-chalk px-2.5 py-0.5 font-ui text-[11px] font-medium text-graphite">
+                  {educationLabel}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Divider */}
+          <div className="border-t border-ruled/50 mb-3" />
+
+          {/* Standard code */}
+          <p className="font-mono text-sm font-bold text-ink mb-2">
+            {code}
           </p>
 
           {/* Description */}
@@ -152,30 +212,10 @@ function StandardPopover({ code, description, url }: StandardPopoverProps) {
             {description || "No description available."}
           </p>
 
-          {/* View source link */}
-          {url && (
-            <a
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-3 inline-flex items-center gap-1 font-ui text-xs font-semibold text-ink/70 transition hover:text-ink focus-ring rounded"
-            >
-              View source
-              <svg
-                className="h-3 w-3"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M17 8l4 4m0 0l-4 4m4-4H3"
-                />
-              </svg>
-            </a>
-          )}
+          {/* Source attribution */}
+          <p className="mt-3 font-ui text-[10px] text-pencil/50">
+            Source: Common Standards Project
+          </p>
         </div>
       )}
     </span>

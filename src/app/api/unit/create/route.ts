@@ -79,6 +79,9 @@ export async function POST(request: Request) {
     const validCodes = verifiedStandards.map((s) => s.code);
     const validDescriptions = verifiedStandards.map((s) => s.description);
     const validUrls = verifiedStandards.map((s) => s.url);
+    const validSetTitles = verifiedStandards.map((s) => s.setTitle || null);
+    const validSetSubjects = verifiedStandards.map((s) => s.setSubject || null);
+    const validSetLevels = verifiedStandards.map((s) => s.setEducationLevels || null);
 
     // Create the unit record with ONLY verified standards
     const [unit] = await db
@@ -91,6 +94,9 @@ export async function POST(request: Request) {
         standardCodes: validCodes,
         standardDescriptions: validDescriptions,
         standardUrls: validUrls,
+        standardSetTitles: validSetTitles,
+        standardSetSubjects: validSetSubjects,
+        standardSetLevels: validSetLevels,
         cognitiveLevel: analysis.cognitiveLevel,
         cognitiveLevelExplanation: analysis.cognitiveLevelExplanation,
         status: "stage1",
