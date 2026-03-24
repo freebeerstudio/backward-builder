@@ -54,3 +54,40 @@ export async function GET(request: Request) {
   const url = new URL("/", request.url);
   return NextResponse.redirect(url);
 }
+
+/**
+ * POST /api/demo — Fetch-friendly demo bypass.
+ *
+ * Sets the cookie and returns JSON (no redirect) so the auth modal
+ * can activate the demo session without navigating away from the page.
+ * This preserves chat box state during the sign-up flow.
+ */
+export async function POST() {
+  const [demoTeacher] = await db
+    .select({ id: teachers.id, displayName: teachers.displayName })
+    .from(teachers)
+    .where(eq(teachers.sessionId, DEMO_SESSION_ID))
+    .limit(1);
+
+  if (!demoTeacher) {
+    return NextResponse.json(
+      { error: "Demo data not found. Run npm run db:seed." },
+      { status: 404 }
+    );
+  }
+
+  const response = NextResponse.json({
+    teacherId: demoTeacher.id,
+    displayName: demoTeacher.displayName || "Mrs. Crabapple",
+  });
+
+  response.cookies.set("teacher_session", DEMO_SESSION_ID, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 60 * 24 * 365,
+    path: "/",
+  });
+
+  return response;
+}

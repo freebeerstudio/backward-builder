@@ -282,17 +282,30 @@ export function AuthModal({ isOpen, initialMode, onSuccess, onClose }: AuthModal
             )}
           </p>
 
-          {/* Demo bypass */}
+          {/* Demo bypass — uses fetch to set cookie without navigating away */}
           <div className="mt-4 border-t border-ruled pt-4 text-center">
-            <a
-              href="/api/demo"
-              className="focus-ring inline-flex items-center gap-1.5 font-ui text-xs font-medium text-pencil/70 transition hover:text-pencil"
+            <button
+              type="button"
+              onClick={async () => {
+                setIsLoading(true);
+                try {
+                  const res = await fetch("/api/demo", { method: "POST" });
+                  const data = await res.json();
+                  if (!res.ok) throw new Error(data.error);
+                  onSuccess(data);
+                } catch {
+                  setError("Failed to load demo. Please try again.");
+                  setIsLoading(false);
+                }
+              }}
+              disabled={isLoading}
+              className="focus-ring inline-flex items-center gap-1.5 font-ui text-xs font-medium text-pencil/70 transition hover:text-pencil disabled:opacity-50"
             >
               <span>Or try the demo as Mrs. Crabapple</span>
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
               </svg>
-            </a>
+            </button>
           </div>
         </form>
       </div>
