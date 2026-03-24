@@ -13,10 +13,31 @@ const GRADES = [
 ];
 
 const SUBJECTS = [
-  "Science",
-  "History / Social Studies",
+  // Core academics
   "English Language Arts",
   "Mathematics",
+  "Science",
+  "History / Social Studies",
+  // Social Studies specializations
+  "U.S. History",
+  "World History",
+  "Civics / Government",
+  "Economics",
+  "Geography",
+  // Science specializations
+  "Biology",
+  "Chemistry",
+  "Physics",
+  "Earth Science",
+  "Environmental Science",
+  // Electives
+  "Art",
+  "Music",
+  "Theater / Drama",
+  "Physical Education / Health",
+  "Computer Science",
+  "World Languages",
+  "Career & Technical Education",
 ];
 
 const STATES = [

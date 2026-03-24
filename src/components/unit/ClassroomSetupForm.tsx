@@ -23,10 +23,27 @@ const GRADE_LEVELS = [
 ];
 
 const SUBJECTS = [
+  "English Language Arts",
+  "Mathematics",
   "Science",
-  "History/Social Studies",
-  "ELA",
-  "Math",
+  "History / Social Studies",
+  "U.S. History",
+  "World History",
+  "Civics / Government",
+  "Economics",
+  "Geography",
+  "Biology",
+  "Chemistry",
+  "Physics",
+  "Earth Science",
+  "Environmental Science",
+  "Art",
+  "Music",
+  "Theater / Drama",
+  "Physical Education / Health",
+  "Computer Science",
+  "World Languages",
+  "Career & Technical Education",
 ];
 
 const US_STATES = [

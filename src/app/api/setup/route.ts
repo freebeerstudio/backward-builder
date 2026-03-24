@@ -10,18 +10,28 @@ import { getOrCreateSessionId } from "@/lib/teacher-session";
  * History/SS uses state-specific frameworks since there's no national standard.
  */
 function deriveStandardsFramework(subject: string, state: string): string {
-  switch (subject) {
-    case "Science":
-      return "NGSS";
-    case "ELA":
-      return "Common Core ELA";
-    case "Math":
-      return "Common Core Math";
-    case "History/Social Studies":
-      return `${state} Social Studies Standards`;
-    default:
-      return `${state} ${subject} Standards`;
+  // Science subjects → NGSS
+  if (["Science", "Biology", "Chemistry", "Physics", "Earth Science", "Environmental Science"].includes(subject)) {
+    return "NGSS";
   }
+  // ELA → Common Core ELA
+  if (subject === "English Language Arts") {
+    return "Common Core ELA";
+  }
+  // Math → Common Core Math
+  if (subject === "Mathematics") {
+    return "Common Core Math";
+  }
+  // Social Studies family → state-specific
+  if (["History / Social Studies", "U.S. History", "World History", "Civics / Government", "Economics", "Geography"].includes(subject)) {
+    return `${state} Social Studies Standards`;
+  }
+  // Computer Science → CSTA
+  if (subject === "Computer Science") {
+    return "CSTA K-12 CS Standards";
+  }
+  // Everything else → state-specific
+  return `${state} ${subject} Standards`;
 }
 
 /**

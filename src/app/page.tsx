@@ -21,23 +21,31 @@ import { ButterflyLogo } from "@/components/ui/ButterflyLogo";
 /* ------------------------------------------------------------------ */
 function guessSubjectColor(eu: string, subject?: string | null): string {
   const lower = (subject || eu).toLowerCase();
-  if (lower.includes("science") || lower.includes("ecosystem") || lower.includes("water") || lower.includes("volcano"))
+  if (lower.includes("science") || lower.includes("biology") || lower.includes("chemistry") || lower.includes("physics") || lower.includes("ecosystem") || lower.includes("water") || lower.includes("volcano") || lower.includes("environmental"))
     return "var(--color-subj-science)";
-  if (lower.includes("history") || lower.includes("revolution") || lower.includes("civilization") || lower.includes("ancient"))
+  if (lower.includes("history") || lower.includes("civics") || lower.includes("government") || lower.includes("economics") || lower.includes("geography") || lower.includes("revolution") || lower.includes("civilization") || lower.includes("ancient"))
     return "var(--color-subj-history)";
-  if (lower.includes("ela") || lower.includes("writing") || lower.includes("poetry") || lower.includes("literature") || lower.includes("language"))
+  if (lower.includes("ela") || lower.includes("english") || lower.includes("writing") || lower.includes("poetry") || lower.includes("literature") || lower.includes("language arts"))
     return "var(--color-subj-ela)";
   if (lower.includes("math") || lower.includes("fraction") || lower.includes("geometry") || lower.includes("algebra"))
     return "var(--color-subj-math)";
+  if (lower.includes("art") || lower.includes("music") || lower.includes("theater") || lower.includes("drama"))
+    return "#8B5CF6"; /* violet for arts */
+  if (lower.includes("computer") || lower.includes("career") || lower.includes("technical"))
+    return "#0891B2"; /* cyan for tech/CTE */
+  if (lower.includes("physical") || lower.includes("health"))
+    return "#059669"; /* emerald for PE/health */
   return "var(--color-ink-muted)";
 }
 
 function guessSubjectLabel(eu: string, subject?: string | null): string {
+  /* If we have the actual subject from the teacher record, use it directly */
+  if (subject && subject !== eu) return subject;
   const lower = (subject || eu).toLowerCase();
-  if (lower.includes("science") || lower.includes("ecosystem") || lower.includes("water")) return "Science";
-  if (lower.includes("history") || lower.includes("revolution") || lower.includes("civilization")) return "History";
-  if (lower.includes("ela") || lower.includes("writing") || lower.includes("poetry") || lower.includes("language")) return "ELA";
-  if (lower.includes("math") || lower.includes("fraction") || lower.includes("geometry")) return "Math";
+  if (lower.includes("science") || lower.includes("biology") || lower.includes("chemistry") || lower.includes("physics") || lower.includes("ecosystem") || lower.includes("environmental")) return "Science";
+  if (lower.includes("history") || lower.includes("civics") || lower.includes("government") || lower.includes("economics") || lower.includes("geography") || lower.includes("revolution") || lower.includes("civilization")) return "History";
+  if (lower.includes("ela") || lower.includes("english") || lower.includes("writing") || lower.includes("poetry") || lower.includes("language arts")) return "ELA";
+  if (lower.includes("math") || lower.includes("fraction") || lower.includes("geometry") || lower.includes("algebra")) return "Math";
   return "Unit";
 }
 
