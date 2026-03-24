@@ -68,6 +68,7 @@ export async function POST(request: Request) {
         essentialQuestions: analysis.essentialQuestions,
         standardCodes: analysis.standardCodes,
         standardDescriptions: analysis.standardDescriptions,
+        standardUrls: analysis.standardUrls,
         cognitiveLevel: analysis.cognitiveLevel,
         cognitiveLevelExplanation: analysis.cognitiveLevelExplanation,
         status: "stage1",

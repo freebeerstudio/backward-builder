@@ -12,6 +12,7 @@ interface UnitData {
   essentialQuestions: string[] | null;
   standardCodes: string[] | null;
   standardDescriptions: string[] | null;
+  standardUrls: string[] | null;
   cognitiveLevel: CognitiveLevel | null;
   cognitiveLevelExplanation: string | null;
   status: string;
@@ -123,22 +124,43 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities }: UnitOverview
           </h2>
         </div>
 
-        {/* Standards */}
+        {/* Standards — linked to authoritative source when URL available */}
         {unit.standardCodes && unit.standardCodes.length > 0 && (
           <div className="mb-5">
             <p className="text-[11px] font-ui font-bold uppercase tracking-wider text-ink/50 mb-2">
               Aligned Standards
             </p>
             <div className="flex flex-wrap gap-2">
-              {unit.standardCodes.map((code, i) => (
-                <span
-                  key={code}
-                  className="rounded-md border border-ruled bg-chalk px-2.5 py-1 font-mono text-xs font-semibold text-graphite"
-                  title={unit.standardDescriptions?.[i] || ""}
-                >
-                  {code}
-                </span>
-              ))}
+              {unit.standardCodes.map((code, i) => {
+                const url = unit.standardUrls?.[i];
+                const description = unit.standardDescriptions?.[i] || "";
+                const className =
+                  "rounded-md border border-ruled bg-chalk px-2.5 py-1 font-mono text-xs font-semibold text-graphite transition";
+
+                return url ? (
+                  <a
+                    key={code}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`${className} hover:border-ink-muted hover:bg-ink/5 hover:text-ink focus-ring`}
+                    title={`${description}\n\nClick to view standard source`}
+                  >
+                    {code}
+                    <svg className="ml-1 inline-block h-3 w-3 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
+                ) : (
+                  <span
+                    key={code}
+                    className={className}
+                    title={description}
+                  >
+                    {code}
+                  </span>
+                );
+              })}
             </div>
           </div>
         )}

@@ -116,6 +116,7 @@ Return a JSON object with this exact schema:
   "essentialQuestions": ["string — 2-3 open-ended questions that drive inquiry toward this understanding"],
   "standardCodes": ["string — 2-4 specific ${state} state standard codes this aligns to (e.g., '7.LS2.A', 'CCSS.ELA-LITERACY.RH.6-8.2', 'NGSS MS-ESS2-1')"],
   "standardDescriptions": ["string — the full text of each standard listed above"],
+  "standardUrls": ["string — a URL to the authoritative source page for each standard above. Use the official state department of education standards page, NGSS, or Common Core site. Each URL must correspond to the standard at the same index in standardCodes."],
   "cognitiveLevel": "string — one of: remember, understand, apply, analyze, evaluate, create",
   "cognitiveLevelExplanation": "string — 1 sentence explaining why this understanding sits at this Bloom's level",
   "reflectionForTeacher": "string — 1-2 sentences of warm, constructive feedback on the enduring understanding's clarity and scope"

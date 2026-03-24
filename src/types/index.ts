@@ -47,6 +47,7 @@ export interface UnderstandingAnalysis {
   essentialQuestions: string[];
   standardCodes: string[];
   standardDescriptions: string[];
+  standardUrls: string[];
   cognitiveLevel: CognitiveLevel;
   cognitiveLevelExplanation: string;
   reflectionForTeacher: string;

@@ -85,6 +85,7 @@ export default async function UnitPage({ params }: UnitPageProps) {
     essentialQuestions: unit.essentialQuestions as string[] | null,
     standardCodes: unit.standardCodes as string[] | null,
     standardDescriptions: unit.standardDescriptions as string[] | null,
+    standardUrls: unit.standardUrls as string[] | null,
     cognitiveLevel: unit.cognitiveLevel as CognitiveLevel | null,
     cognitiveLevelExplanation: unit.cognitiveLevelExplanation,
     status: unit.status,

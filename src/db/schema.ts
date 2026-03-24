@@ -77,6 +77,7 @@ export const units = pgTable("units", {
   essentialQuestions: jsonb("essential_questions"), // string[]
   standardCodes: jsonb("standard_codes"), // string[]
   standardDescriptions: jsonb("standard_descriptions"), // string[]
+  standardUrls: jsonb("standard_urls"), // string[] — links to authoritative source for each standard
   cognitiveLevel: cognitiveLevelEnum("cognitive_level"),
   cognitiveLevelExplanation: text("cognitive_level_explanation"),
   status: unitStatusEnum("status").default("stage1").notNull(),
