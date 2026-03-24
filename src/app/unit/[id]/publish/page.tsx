@@ -6,6 +6,7 @@ import {
 } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { notFound } from "next/navigation";
+import { Header } from "@/components/layout/Header";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { UbDProgressIndicator } from "@/components/unit/UbDProgressIndicator";
 import { Card } from "@/components/ui/Card";
@@ -56,6 +57,7 @@ export default async function PublishPage({
 
   return (
     <div className="min-h-screen bg-warmwhite pb-16">
+      <Header />
       <PageContainer className="pt-8 space-y-8">
         {/* Progress indicator — all 3 complete */}
         <UbDProgressIndicator

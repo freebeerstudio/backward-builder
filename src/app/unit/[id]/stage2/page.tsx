@@ -7,6 +7,7 @@ import {
 } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
+import { Header } from "@/components/layout/Header";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { UbDProgressIndicator } from "@/components/unit/UbDProgressIndicator";
 import { Stage2Client } from "./Stage2Client";
@@ -97,6 +98,7 @@ export default async function Stage2Page({
 
   return (
     <div className="min-h-screen bg-warmwhite pb-16">
+      <Header />
       <PageContainer className="pt-8">
         {/* Progress indicator */}
         <UbDProgressIndicator currentStage={2} completedStages={[1]} />
