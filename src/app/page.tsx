@@ -151,7 +151,7 @@ export default async function Home() {
       />
 
       {/* ===================== HERO ===================== */}
-      <section className="hero-gradient dot-grid relative overflow-hidden px-4 pb-12 pt-16 sm:px-6 sm:pb-16 sm:pt-24">
+      <section className="hero-gradient dot-grid relative overflow-visible px-4 pb-12 pt-16 sm:px-6 sm:pb-16 sm:pt-24">
         <div className="relative z-10 mx-auto max-w-6xl text-center">
           <h1 className="animate-hero-title">
             <span className="block font-display text-4xl leading-[1.15] text-ink sm:text-5xl lg:text-[3.5rem]">
