@@ -13,6 +13,7 @@ import { Header } from "@/components/layout/Header";
 import { UbDProgressIndicator } from "@/components/unit/UbDProgressIndicator";
 import { LearningActivityCard } from "@/components/unit/LearningActivityCard";
 import { GeneratePlanButton } from "./GeneratePlanButton";
+import { getAuthenticatedTeacher } from "@/lib/auth";
 
 interface Stage3PageProps {
   params: Promise<{ id: string }>;
@@ -40,6 +41,11 @@ export default async function Stage3Page({ params }: Stage3PageProps) {
   if (!unit) {
     redirect("/");
   }
+
+  // Determine ownership — pages remain accessible for viewing,
+  // but only the owner can generate content
+  const auth = await getAuthenticatedTeacher();
+  const isOwner = auth.authenticated && auth.teacherId === unit.teacherId;
 
   // Load activities in sequence order
   const activities = await db
@@ -144,7 +150,7 @@ export default async function Stage3Page({ params }: Stage3PageProps) {
               </svg>
             </div>
 
-            {stage2Complete ? (
+            {stage2Complete && isOwner ? (
               <>
                 <h3 className="font-heading text-lg font-semibold text-forest-dark">
                   Ready to Generate Your Learning Plan
@@ -158,22 +164,33 @@ export default async function Stage3Page({ params }: Stage3PageProps) {
                   <GeneratePlanButton unitId={unitId} />
                 </div>
               </>
+            ) : stage2Complete && !isOwner ? (
+              <>
+                <h3 className="font-heading text-lg font-semibold text-text-light">
+                  No Learning Plan Yet
+                </h3>
+                <p className="mx-auto mt-2 max-w-md font-body text-sm text-text-light">
+                  The unit owner has not generated a learning plan yet.
+                </p>
+              </>
             ) : (
               <>
                 <h3 className="font-heading text-lg font-semibold text-text-light">
                   Complete Stage 2 First
                 </h3>
                 <p className="mx-auto mt-2 max-w-md font-body text-sm text-text-light">
-                  You need a selected performance task and checks for
-                  understanding before generating a learning plan. That is the
-                  backward design principle — assessments before activities.
+                  {isOwner
+                    ? "You need a selected performance task and checks for understanding before generating a learning plan. That is the backward design principle \u2014 assessments before activities."
+                    : "Stage 2 has not been completed yet. A selected performance task and checks for understanding are needed before a learning plan can be generated."}
                 </p>
-                <Link
-                  href={`/unit/${unitId}`}
-                  className="mt-4 inline-block rounded-lg bg-forest px-6 py-2.5 font-heading text-sm font-semibold text-white transition-colors hover:bg-forest-light"
-                >
-                  Back to Unit Overview
-                </Link>
+                {isOwner && (
+                  <Link
+                    href={`/unit/${unitId}`}
+                    className="mt-4 inline-block rounded-lg bg-forest px-6 py-2.5 font-heading text-sm font-semibold text-white transition-colors hover:bg-forest-light"
+                  >
+                    Back to Unit Overview
+                  </Link>
+                )}
               </>
             )}
           </div>

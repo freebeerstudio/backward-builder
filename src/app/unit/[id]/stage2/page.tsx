@@ -10,6 +10,7 @@ import { notFound } from "next/navigation";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { UbDProgressIndicator } from "@/components/unit/UbDProgressIndicator";
 import { Stage2Client } from "./Stage2Client";
+import { getAuthenticatedTeacher } from "@/lib/auth";
 import type { RubricCriterion, MCOption, CognitiveLevel } from "@/types";
 
 /**
@@ -36,6 +37,12 @@ export default async function Stage2Page({
   if (!unit) {
     notFound();
   }
+
+  // Determine ownership — pages remain accessible for viewing,
+  // but only the owner can generate/edit content
+  const auth = await getAuthenticatedTeacher();
+  const isAuthenticated = auth.authenticated;
+  const isOwner = isAuthenticated && auth.teacherId === unit.teacherId;
 
   // Load performance tasks
   const tasks = await db
@@ -117,6 +124,8 @@ export default async function Stage2Page({
           tasks={serializedTasks}
           checks={checksWithQuestions}
           hasSelectedTask={hasSelectedTask}
+          isOwner={isOwner}
+          isAuthenticated={isAuthenticated}
         />
 
         {/* Navigation */}

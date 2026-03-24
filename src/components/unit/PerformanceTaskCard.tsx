@@ -21,7 +21,7 @@ interface PerformanceTaskData {
 interface PerformanceTaskCardProps {
   task: PerformanceTaskData;
   isSelected: boolean;
-  onSelect: (taskId: string) => void;
+  onSelect?: (taskId: string) => void;
   loading?: boolean;
 }
 
@@ -145,7 +145,7 @@ function PerformanceTaskCard({
 
       {/* Action buttons */}
       <div className="mt-4 flex items-center gap-3 flex-wrap">
-        {!isSelected ? (
+        {!isSelected && onSelect ? (
           <Button
             variant="accent"
             size="sm"
@@ -155,7 +155,7 @@ function PerformanceTaskCard({
           >
             Select This Task
           </Button>
-        ) : (
+        ) : isSelected ? (
           <Button variant="primary" size="sm" disabled>
             <svg
               className="h-4 w-4"
@@ -172,7 +172,7 @@ function PerformanceTaskCard({
             </svg>
             Selected
           </Button>
-        )}
+        ) : null}
 
         <button
           onClick={() => setExpanded(!expanded)}

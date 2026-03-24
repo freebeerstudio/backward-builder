@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { getOrCreateSessionId } from "@/lib/teacher-session";
 import { analyzeUnderstanding } from "@/lib/claude";
 import { validateStandardCodes } from "@/lib/standards";
+import { getAuthenticatedTeacher } from "@/lib/auth";
 
 /**
  * POST /api/unit/create — Create a new unit from an enduring understanding.
@@ -13,6 +14,12 @@ import { validateStandardCodes } from "@/lib/standards";
  */
 export async function POST(request: Request) {
   try {
+    // Auth check: verify the session has an authenticated teacher
+    const auth = await getAuthenticatedTeacher();
+    if (!auth.authenticated) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+
     const { enduringUnderstanding } = await request.json();
 
     if (!enduringUnderstanding || typeof enduringUnderstanding !== "string") {

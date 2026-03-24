@@ -5,6 +5,7 @@ import {
   studentSubmissions,
 } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { validateUnitOwnership } from "@/lib/auth";
 
 interface CriterionReview {
   answerId: string;
@@ -30,6 +31,13 @@ export async function POST(
 ) {
   try {
     const { id: unitId } = await params;
+
+    // Ownership check: verify the current session owns this unit
+    const ownership = await validateUnitOwnership(unitId);
+    if (!ownership) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+
     const body: ReviewRequest = await request.json();
     const { submissionId, criterionReviews } = body;
 

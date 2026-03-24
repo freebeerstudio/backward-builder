@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { performanceTasks } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
+import { validateUnitOwnership } from "@/lib/auth";
 
 /**
  * POST /api/unit/[id]/select-task
@@ -15,6 +16,13 @@ export async function POST(
 ) {
   try {
     const { id: unitId } = await params;
+
+    // Ownership check: verify the current session owns this unit
+    const ownership = await validateUnitOwnership(unitId);
+    if (!ownership) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+
     const { taskId } = await request.json();
 
     if (!taskId) {

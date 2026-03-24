@@ -7,6 +7,7 @@ import {
 } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { generateShareCode } from "@/lib/share-code";
+import { validateUnitOwnership } from "@/lib/auth";
 
 /**
  * POST /api/unit/[id]/publish
@@ -21,6 +22,12 @@ export async function POST(
 ) {
   try {
     const { id: unitId } = await params;
+
+    // Ownership check: verify the current session owns this unit
+    const ownership = await validateUnitOwnership(unitId);
+    if (!ownership) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
 
     // Load unit
     const [unit] = await db

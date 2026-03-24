@@ -8,6 +8,7 @@ import {
   studentAnswers,
 } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
+import { validateUnitOwnership } from "@/lib/auth";
 
 /**
  * GET /api/unit/[id]/results
@@ -22,6 +23,12 @@ export async function GET(
 ) {
   try {
     const { id: unitId } = await params;
+
+    // Ownership check: verify the current session owns this unit
+    const ownership = await validateUnitOwnership(unitId);
+    if (!ownership) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
 
     // Load unit
     const [unit] = await db

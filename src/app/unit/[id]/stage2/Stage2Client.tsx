@@ -37,6 +37,8 @@ interface Stage2ClientProps {
   tasks: TaskWithSelection[];
   checks: CheckData[];
   hasSelectedTask: boolean;
+  isOwner: boolean;
+  isAuthenticated: boolean;
 }
 
 /**
@@ -49,6 +51,8 @@ function Stage2Client({
   tasks: initialTasks,
   checks: initialChecks,
   hasSelectedTask: initialHasSelected,
+  isOwner,
+  isAuthenticated,
 }: Stage2ClientProps) {
   const router = useRouter();
 
@@ -251,7 +255,7 @@ function Stage2Client({
           </div>
         </div>
 
-        {/* No tasks yet — show generate button */}
+        {/* No tasks yet — show generate button (owner only) or read-only message */}
         {tasks.length === 0 && !generatingTasks && (
           <div className="rounded-xl border-2 border-dashed border-border bg-card p-8 text-center">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-gold/20">
@@ -270,21 +274,23 @@ function Stage2Client({
               </svg>
             </div>
             <h3 className="font-heading text-lg font-semibold text-forest-dark">
-              Ready to Design Assessments
+              {isOwner ? "Ready to Design Assessments" : "No Performance Tasks Yet"}
             </h3>
             <p className="mt-2 text-sm text-text-light max-w-md mx-auto">
-              AI will generate two performance task options based on your
-              enduring understanding and standards. Each includes a full GRASPS
-              scenario and rubric.
+              {isOwner
+                ? "AI will generate two performance task options based on your enduring understanding and standards. Each includes a full GRASPS scenario and rubric."
+                : "The unit owner has not generated performance tasks yet."}
             </p>
-            <Button
-              variant="accent"
-              size="lg"
-              onClick={handleGenerateTasks}
-              className="mt-5"
-            >
-              Generate Performance Tasks
-            </Button>
+            {isOwner && (
+              <Button
+                variant="accent"
+                size="lg"
+                onClick={handleGenerateTasks}
+                className="mt-5"
+              >
+                Generate Performance Tasks
+              </Button>
+            )}
           </div>
         )}
 
@@ -309,7 +315,7 @@ function Stage2Client({
                 key={task.id}
                 task={task}
                 isSelected={task.isSelected}
-                onSelect={handleSelectTask}
+                onSelect={isOwner ? handleSelectTask : undefined}
                 loading={selectingTask === task.id}
               />
             ))}
@@ -355,31 +361,34 @@ function Stage2Client({
             {!hasSelectedTask ? (
               <>
                 <h3 className="font-heading text-lg font-semibold text-text-light">
-                  Select a Performance Task First
+                  {isOwner ? "Select a Performance Task First" : "No Checks for Understanding Yet"}
                 </h3>
                 <p className="mt-2 text-sm text-text-light max-w-md mx-auto">
-                  Checks for understanding are aligned to the performance task
-                  rubric. Select a task above, then generate checks here.
+                  {isOwner
+                    ? "Checks for understanding are aligned to the performance task rubric. Select a task above, then generate checks here."
+                    : "The unit owner has not generated checks for understanding yet."}
                 </p>
               </>
             ) : (
               <>
                 <h3 className="font-heading text-lg font-semibold text-forest-dark">
-                  Generate Formative Checks
+                  {isOwner ? "Generate Formative Checks" : "No Checks for Understanding Yet"}
                 </h3>
                 <p className="mt-2 text-sm text-text-light max-w-md mx-auto">
-                  AI will create formative checks with questions mapped to the
-                  selected task&apos;s rubric criteria — so you know exactly
-                  where students stand before the performance task.
+                  {isOwner
+                    ? "AI will create formative checks with questions mapped to the selected task\u2019s rubric criteria \u2014 so you know exactly where students stand before the performance task."
+                    : "The unit owner has not generated checks for understanding yet."}
                 </p>
-                <Button
-                  variant="accent"
-                  size="lg"
-                  onClick={handleGenerateChecks}
-                  className="mt-5"
-                >
-                  Generate Checks for Understanding
-                </Button>
+                {isOwner && (
+                  <Button
+                    variant="accent"
+                    size="lg"
+                    onClick={handleGenerateChecks}
+                    className="mt-5"
+                  >
+                    Generate Checks for Understanding
+                  </Button>
+                )}
               </>
             )}
           </div>
