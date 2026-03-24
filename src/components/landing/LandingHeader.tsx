@@ -99,12 +99,12 @@ export function LandingHeader({ isAuthenticated, teacherName, teacherInitial }: 
           ) : (
             /* Unauthenticated: Try Demo + Sign in + Sign up */
             <div className="flex items-center gap-2 sm:gap-3">
-              <Link
+              <a
                 href="/api/demo"
                 className="focus-ring hidden rounded-lg px-3.5 py-2 font-ui text-sm font-medium text-pencil transition hover:bg-chalk hover:text-graphite sm:inline-flex"
               >
                 Try Demo
-              </Link>
+              </a>
               <button
                 onClick={() => { setAuthMode("signin"); setShowAuthModal(true); }}
                 className="focus-ring rounded-lg px-3.5 py-2 font-ui text-sm font-medium text-pencil transition hover:bg-chalk hover:text-graphite"

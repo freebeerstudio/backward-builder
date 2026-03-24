@@ -45,20 +45,20 @@ function guessSubjectLabel(eu: string, subject?: string | null): string {
 /*  Static fallback community units (shown when DB has no public units) */
 /* ------------------------------------------------------------------ */
 const FALLBACK_COMMUNITY_UNITS: UnitCardData[] = [
-  { id: "c1", title: "Ecosystem Interdependence", description: "Trophic cascades and the Yellowstone wolf reintroduction", subject: "Science", grade: "7th", teacher: "Mrs. Crabapple", initial: "C", uses: 142, color: "var(--color-subj-science)", href: "/api/demo" },
-  { id: "c2", title: "Causes of the American Revolution", description: "Economic, political, and ideological tensions leading to independence", subject: "History", grade: "8th", teacher: "Mr. Rodriguez", initial: "R", uses: 98, color: "var(--color-subj-history)", href: "/api/demo" },
-  { id: "c3", title: "Persuasive Writing & Rhetoric", description: "Analyzing persuasion techniques across speeches and editorials", subject: "ELA", grade: "6th", teacher: "Ms. Chen", initial: "C", uses: 217, color: "var(--color-subj-ela)", href: "/api/demo" },
-  { id: "c4", title: "Fractions in the Real World", description: "Applying fraction operations to cooking, construction, and design", subject: "Math", grade: "5th", teacher: "Mr. Thompson", initial: "T", uses: 63, color: "var(--color-subj-math)", href: "/api/demo" },
-  { id: "c5", title: "The Water Cycle as a System", description: "Solar energy, evaporation, condensation, and human impact", subject: "Science", grade: "5th", teacher: "Mrs. Johnson", initial: "J", uses: 184, color: "var(--color-subj-science)", href: "/api/demo" },
-  { id: "c6", title: "Ancient Civilizations", description: "How geography shaped social, political, and economic development", subject: "History", grade: "6th", teacher: "Ms. Patel", initial: "P", uses: 311, color: "var(--color-subj-history)", href: "/api/demo" },
-  { id: "c7", title: "Poetry, Voice & Identity", description: "How poets use language, form, and structure to express perspective", subject: "ELA", grade: "8th", teacher: "Mr. Davis", initial: "D", uses: 76, color: "var(--color-subj-ela)", href: "/api/demo" },
-  { id: "c8", title: "Geometric Transformations", description: "Translations, rotations, reflections, and real-world symmetry", subject: "Math", grade: "7th", teacher: "Mrs. Kim", initial: "K", uses: 129, color: "var(--color-subj-math)", href: "/api/demo" },
+  { id: "c1", title: "Ecosystem Interdependence", description: "Trophic cascades and the Yellowstone wolf reintroduction", subject: "Science", grade: "7th", teacher: "Mrs. Crabapple", initial: "C", uses: 142, color: "var(--color-subj-science)", href: "/unit/00000000-0000-0000-0000-000000000010" },
+  { id: "c2", title: "Causes of the American Revolution", description: "Economic, political, and ideological tensions leading to independence", subject: "History", grade: "8th", teacher: "Mr. Rodriguez", initial: "R", uses: 98, color: "var(--color-subj-history)", href: "/unit/00000000-0000-0000-0000-000000000020" },
+  { id: "c3", title: "Persuasive Writing & Rhetoric", description: "Analyzing persuasion techniques across speeches and editorials", subject: "ELA", grade: "6th", teacher: "Ms. Chen", initial: "C", uses: 217, color: "var(--color-subj-ela)", href: "#" },
+  { id: "c4", title: "Fractions in the Real World", description: "Applying fraction operations to cooking, construction, and design", subject: "Math", grade: "5th", teacher: "Mr. Thompson", initial: "T", uses: 63, color: "var(--color-subj-math)", href: "#" },
+  { id: "c5", title: "The Water Cycle as a System", description: "Solar energy, evaporation, condensation, and human impact", subject: "Science", grade: "5th", teacher: "Mrs. Johnson", initial: "J", uses: 184, color: "var(--color-subj-science)", href: "#" },
+  { id: "c6", title: "Ancient Civilizations", description: "How geography shaped social, political, and economic development", subject: "History", grade: "6th", teacher: "Ms. Patel", initial: "P", uses: 311, color: "var(--color-subj-history)", href: "#" },
+  { id: "c7", title: "Poetry, Voice & Identity", description: "How poets use language, form, and structure to express perspective", subject: "ELA", grade: "8th", teacher: "Mr. Davis", initial: "D", uses: 76, color: "var(--color-subj-ela)", href: "#" },
+  { id: "c8", title: "Geometric Transformations", description: "Translations, rotations, reflections, and real-world symmetry", subject: "Math", grade: "7th", teacher: "Mrs. Kim", initial: "K", uses: 129, color: "var(--color-subj-math)", href: "#" },
 ];
 
 /* Placeholder shared units for the demo teacher */
 const SHARED_UNITS: UnitCardData[] = [
-  { id: "s1", title: "The Civil Rights Movement", description: "How nonviolent resistance and legal strategy dismantled Jim Crow laws", subject: "History", grade: "8th", teacher: "Mr. Rodriguez", initial: "R", color: "var(--color-subj-history)", href: "/api/demo" },
-  { id: "s2", title: "Genetics & Heredity", description: "How traits are passed from parents to offspring through DNA", subject: "Science", grade: "7th", teacher: "Mrs. Johnson", initial: "J", color: "var(--color-subj-science)", href: "/api/demo" },
+  { id: "s1", title: "The Civil Rights Movement", description: "How nonviolent resistance and legal strategy dismantled Jim Crow laws", subject: "History", grade: "8th", teacher: "Mr. Rodriguez", initial: "R", color: "var(--color-subj-history)", href: "#" },
+  { id: "s2", title: "Genetics & Heredity", description: "How traits are passed from parents to offspring through DNA", subject: "Science", grade: "7th", teacher: "Mrs. Johnson", initial: "J", color: "var(--color-subj-science)", href: "#" },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -236,7 +236,7 @@ export default async function Home() {
               <h3 className="font-ui text-xs font-bold uppercase tracking-wider text-ink/60">Product</h3>
               <ul className="mt-3 space-y-2.5">
                 <li><Link href="/setup" className="focus-ring text-sm text-pencil transition hover:text-ink">Design a Unit</Link></li>
-                <li><Link href="/api/demo" className="focus-ring text-sm text-pencil transition hover:text-ink">Try the Demo</Link></li>
+                <li><a href="/api/demo" className="focus-ring text-sm text-pencil transition hover:text-ink">Try the Demo</a></li>
                 <li><Link href="/dashboard" className="focus-ring text-sm text-pencil transition hover:text-ink">My Units</Link></li>
                 <li><a href="https://github.com/freebeerstudio/backward-builder" target="_blank" rel="noopener noreferrer" className="focus-ring text-sm text-pencil transition hover:text-ink">Source Code</a></li>
               </ul>
