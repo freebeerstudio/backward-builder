@@ -111,8 +111,11 @@ export async function GET(
       scoreSum += sub.totalScore ?? 0;
       maxSum += sub.maxScore ?? 0;
 
-      // Get submission content (non-criterion answers)
-      const contentAnswers = answers.filter((a) => !a.criterionName);
+      // Get submission content — include the "_submission" marker answer
+      // which holds the original student content (text, file ref, or link)
+      const contentAnswers = answers.filter(
+        (a) => !a.criterionName || a.criterionName === "_submission"
+      );
       const submissionContent = contentAnswers.length > 0
         ? contentAnswers.map((a) => a.answer).join("\n")
         : "";

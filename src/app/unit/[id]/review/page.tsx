@@ -92,6 +92,103 @@ function statusClasses(status: string): string {
 }
 
 /**
+ * Extract a URL from submission content.
+ * Handles both raw URLs and bracketed formats like "[Link Submission: https://...]"
+ */
+function extractUrl(content: string): string | null {
+  // Direct URL
+  if (content.trim().startsWith('http')) return content.trim().split(/\s/)[0];
+  // Bracketed format: [Link Submission: URL]
+  const bracketMatch = content.match(/\[Link Submission:\s*(https?:\/\/[^\]]+)\]/);
+  if (bracketMatch) return bracketMatch[1];
+  // Any URL in the content
+  const urlMatch = content.match(/(https?:\/\/[^\s\]]+)/);
+  if (urlMatch) return urlMatch[1];
+  return null;
+}
+
+/**
+ * Detect Google Workspace URL type
+ */
+function detectGoogleType(url: string): { type: 'doc' | 'slides' | 'sheets'; label: string; icon: string } | null {
+  if (url.includes('docs.google.com/document')) return { type: 'doc', label: 'Google Docs', icon: '📄' };
+  if (url.includes('docs.google.com/presentation')) return { type: 'slides', label: 'Google Slides', icon: '📊' };
+  if (url.includes('docs.google.com/spreadsheets')) return { type: 'sheets', label: 'Google Sheets', icon: '📋' };
+  return null;
+}
+
+/**
+ * Renders submission content with smart link detection.
+ * Google Workspace links get a branded "Open Document" button.
+ */
+function SubmissionContentDisplay({ content }: { content: string }) {
+  const url = extractUrl(content);
+
+  if (url) {
+    const google = detectGoogleType(url);
+
+    if (google) {
+      return (
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">{google.icon}</span>
+            <div className="flex-1 min-w-0">
+              <p className="font-heading text-sm font-semibold text-text">
+                Student submitted via {google.label}
+              </p>
+              <p className="font-body font-mono text-xs text-text-light truncate">
+                {url}
+              </p>
+            </div>
+          </div>
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-lg bg-forest px-4 py-2.5 font-heading text-sm font-medium text-white transition-colors hover:bg-forest-light"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+            Open {google.label}
+          </a>
+        </div>
+      );
+    }
+
+    // Non-Google URL
+    return (
+      <div className="space-y-2">
+        <p className="font-heading text-sm font-semibold text-text">
+          Student submitted a link
+        </p>
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 rounded-lg bg-forest px-4 py-2.5 font-heading text-sm font-medium text-white transition-colors hover:bg-forest-light"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+          Open Link
+        </a>
+        <p className="font-body font-mono text-xs text-text-light break-all">
+          {url}
+        </p>
+      </div>
+    );
+  }
+
+  // Plain text submission
+  return (
+    <p className="whitespace-pre-wrap font-body text-sm leading-relaxed text-text">
+      {content}
+    </p>
+  );
+}
+
+/**
  * Teacher Performance Task Review — Dual-scoring interface.
  *
  * This is the signature feature: teachers review AI-generated rubric scores
@@ -405,20 +502,7 @@ export default function ReviewPage() {
                   Student Response
                 </h3>
                 <div className="rounded-lg border border-border bg-warmwhite p-4">
-                  {selectedSub.submissionContent.startsWith('http') ? (
-                    <a
-                      href={selectedSub.submissionContent}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-body text-sm text-forest underline hover:text-forest-light"
-                    >
-                      {selectedSub.submissionContent}
-                    </a>
-                  ) : (
-                    <p className="whitespace-pre-wrap font-body text-sm leading-relaxed text-text">
-                      {selectedSub.submissionContent}
-                    </p>
-                  )}
+                  <SubmissionContentDisplay content={selectedSub.submissionContent} />
                 </div>
               </div>
             )}
