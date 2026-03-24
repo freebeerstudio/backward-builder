@@ -8,6 +8,7 @@ import {
 } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { scorePerformanceTask } from "@/lib/claude";
+import { fetchGoogleDocContent, parseGoogleUrl } from "@/lib/google-docs";
 import type { RubricCriterion } from "@/types";
 
 /**
@@ -120,11 +121,34 @@ export async function POST(
 
     const rubric = task.rubric as RubricCriterion[];
 
-    // For text/link, use the content directly. For file, we pass what we have.
-    const responseForScoring =
-      submissionType === "link"
-        ? `Student submitted a link to their work: ${content}`
-        : content;
+    // For link submissions, try to fetch the actual document content.
+    // This is critical for Google Docs/Slides/Sheets — without reading
+    // the content, the AI can't score against the rubric.
+    let responseForScoring: string;
+
+    if (submissionType === "link") {
+      const googleParsed = parseGoogleUrl(content);
+      if (googleParsed) {
+        const docContent = await fetchGoogleDocContent(content);
+        if (docContent) {
+          responseForScoring = `[Student submitted via Google ${
+            googleParsed.type === "doc" ? "Docs" :
+            googleParsed.type === "slides" ? "Slides" : "Sheets"
+          }]\n\n--- DOCUMENT CONTENT ---\n\n${docContent}\n\n--- END DOCUMENT CONTENT ---`;
+        } else {
+          // Document not publicly accessible — tell the AI what we know
+          responseForScoring = `Student submitted a Google ${
+            googleParsed.type === "doc" ? "Docs document" :
+            googleParsed.type === "slides" ? "Slides presentation" : "Sheets spreadsheet"
+          } at: ${content}\n\nNote: The document could not be read automatically. It may not be shared publicly. Please score based on any available information, or mark criteria as "Pending" if the content cannot be evaluated.`;
+        }
+      } else {
+        // Non-Google link — pass the URL
+        responseForScoring = `Student submitted a link to their work: ${content}`;
+      }
+    } else {
+      responseForScoring = content;
+    }
 
     let criterionScores;
     try {
