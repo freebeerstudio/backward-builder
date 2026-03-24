@@ -109,6 +109,70 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities, isOwner = true
   const router = useRouter();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
+  /* ---- Inline-editable Essential Questions state ---- */
+  const [editingEQs, setEditingEQs] = useState(false);
+  const [eqDraft, setEqDraft] = useState<string[]>(unit.essentialQuestions || []);
+  const [eqSaving, setEqSaving] = useState(false);
+  const [eqError, setEqError] = useState<string | null>(null);
+  /* Live display values — updated optimistically on save */
+  const [displayEQs, setDisplayEQs] = useState<string[]>(unit.essentialQuestions || []);
+
+  function startEditingEQs() {
+    setEqDraft([...displayEQs]);
+    setEqError(null);
+    setEditingEQs(true);
+  }
+
+  function cancelEditingEQs() {
+    setEditingEQs(false);
+    setEqError(null);
+  }
+
+  function updateEqDraft(index: number, value: string) {
+    setEqDraft((prev) => prev.map((q, i) => (i === index ? value : q)));
+  }
+
+  function addEq() {
+    setEqDraft((prev) => [...prev, ""]);
+  }
+
+  function removeEq(index: number) {
+    if (eqDraft.length <= 1) return; // Keep at least one
+    setEqDraft((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  async function saveEQs() {
+    const cleaned = eqDraft.map((q) => q.trim()).filter((q) => q.length > 0);
+    if (cleaned.length === 0) {
+      setEqError("At least one essential question is required.");
+      return;
+    }
+
+    setEqSaving(true);
+    setEqError(null);
+
+    try {
+      const res = await fetch(`/api/unit/${unit.id}/update-eqs`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ essentialQuestions: cleaned }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to save");
+      }
+
+      const data = await res.json();
+      setDisplayEQs(data.essentialQuestions);
+      setEditingEQs(false);
+    } catch (err) {
+      setEqError(err instanceof Error ? err.message : "Failed to save");
+    } finally {
+      setEqSaving(false);
+    }
+  }
+
   /**
    * Guard for edit actions. If the user isn't the owner (or isn't even
    * authenticated), show the auth modal instead of navigating.
@@ -239,22 +303,103 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities, isOwner = true
           </div>
         )}
 
-        {/* Essential Questions */}
-        {unit.essentialQuestions && unit.essentialQuestions.length > 0 && (
+        {/* Essential Questions — inline editable for unit owner */}
+        {displayEQs.length > 0 && (
           <div>
-            <p className="text-[11px] font-ui font-bold uppercase tracking-wider text-ink/50 mb-2.5">
-              Essential Questions
-            </p>
-            <ul className="space-y-2">
-              {unit.essentialQuestions.map((q, i) => (
-                <li key={i} className="flex gap-2 font-ui text-sm text-graphite">
-                  <span className="shrink-0 font-semibold text-ink">
-                    Q{i + 1}.
-                  </span>
-                  <span className="italic leading-relaxed">{q}</span>
-                </li>
-              ))}
-            </ul>
+            <div className="flex items-center justify-between mb-2.5">
+              <p className="text-[11px] font-ui font-bold uppercase tracking-wider text-ink/50">
+                Essential Questions
+              </p>
+              {isOwner && !editingEQs && (
+                <button
+                  onClick={startEditingEQs}
+                  className="focus-ring rounded px-2 py-0.5 font-ui text-[11px] font-medium text-pencil transition hover:bg-chalk hover:text-ink"
+                  aria-label="Edit essential questions"
+                >
+                  <svg className="mr-1 inline-block h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                  Edit
+                </button>
+              )}
+            </div>
+
+            {editingEQs ? (
+              /* ---- Edit mode ---- */
+              <div className="space-y-3">
+                {eqDraft.map((q, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <span className="shrink-0 pt-2 font-ui text-sm font-semibold text-ink">
+                      Q{i + 1}.
+                    </span>
+                    <textarea
+                      value={q}
+                      onChange={(e) => updateEqDraft(i, e.target.value)}
+                      rows={2}
+                      className="flex-1 rounded-md border border-ruled bg-cream px-3 py-2 font-ui text-sm text-graphite italic leading-relaxed transition focus:border-ink focus:outline-none focus:ring-1 focus:ring-ink/20"
+                      placeholder="Enter an essential question…"
+                    />
+                    {eqDraft.length > 1 && (
+                      <button
+                        onClick={() => removeEq(i)}
+                        className="shrink-0 mt-2 rounded p-1 text-pencil/50 transition hover:bg-red-50 hover:text-red-500"
+                        aria-label={`Remove question ${i + 1}`}
+                      >
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                ))}
+
+                {/* Add question button */}
+                <button
+                  onClick={addEq}
+                  className="focus-ring ml-7 flex items-center gap-1 rounded px-2 py-1 font-ui text-xs font-medium text-pencil transition hover:bg-chalk hover:text-ink"
+                >
+                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add Question
+                </button>
+
+                {/* Error message */}
+                {eqError && (
+                  <p className="ml-7 font-ui text-xs text-red-600">{eqError}</p>
+                )}
+
+                {/* Save / Cancel */}
+                <div className="ml-7 flex items-center gap-2 pt-1">
+                  <button
+                    onClick={saveEQs}
+                    disabled={eqSaving}
+                    className="focus-ring rounded-md bg-ink px-3.5 py-1.5 font-ui text-xs font-semibold text-white transition hover:bg-ink-light disabled:opacity-50"
+                  >
+                    {eqSaving ? "Saving…" : "Save"}
+                  </button>
+                  <button
+                    onClick={cancelEditingEQs}
+                    disabled={eqSaving}
+                    className="focus-ring rounded-md px-3.5 py-1.5 font-ui text-xs font-medium text-pencil transition hover:bg-chalk hover:text-ink disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* ---- Read mode ---- */
+              <ul className="space-y-2">
+                {displayEQs.map((q, i) => (
+                  <li key={i} className="flex gap-2 font-ui text-sm text-graphite">
+                    <span className="shrink-0 font-semibold text-ink">
+                      Q{i + 1}.
+                    </span>
+                    <span className="italic leading-relaxed">{q}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
       </Card>
