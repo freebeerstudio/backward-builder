@@ -506,6 +506,95 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities, isOwner = true
           </div>
         )}
       </Card>
+
+      {/* ---- Launch & Results ---- */}
+      {/* Only show after all 3 stages are complete */}
+      {hasActivities && (
+        <>
+          {/* Publish / Go Live card */}
+          <Card hover>
+            <div className="flex items-center gap-3 mb-5">
+              {/* Rocket icon for launch */}
+              <div className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                unit.status === "complete"
+                  ? "bg-emerald-100 text-emerald-700"
+                  : "bg-amber-100 text-amber-700"
+              }`}>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+              </div>
+              <h2 className="font-display text-lg text-ink">
+                Share with Students
+              </h2>
+            </div>
+
+            {unit.status === "complete" ? (
+              <div className="space-y-2.5">
+                <div className="flex items-center gap-2">
+                  <CheckIcon className="h-4 w-4 text-emerald-600" />
+                  <span className="font-ui text-sm text-graphite">Unit is live — students can access checks and tasks</span>
+                </div>
+                <div className="pt-2 flex flex-wrap gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => guardedAction(() => router.push(`/unit/${unit.id}/publish`))}
+                  >
+                    View QR Codes & Share Links
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <p className="font-ui text-sm text-pencil leading-relaxed mb-4">
+                  Go live and share QR codes or short links with students.
+                  They&apos;ll access checks for understanding and performance tasks
+                  from any device — no login required.
+                </p>
+                {isOwner && (
+                  <Button
+                    variant="primary"
+                    size="md"
+                    onClick={() => router.push(`/unit/${unit.id}/publish`)}
+                  >
+                    Go Live →
+                  </Button>
+                )}
+              </div>
+            )}
+          </Card>
+
+          {/* Results card */}
+          {unit.status === "complete" && (
+            <Card hover>
+              <div className="flex items-center gap-3 mb-5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-700">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <h2 className="font-display text-lg text-ink">
+                  Results & Insights
+                </h2>
+              </div>
+
+              <p className="font-ui text-sm text-pencil leading-relaxed mb-4">
+                View student submissions, auto-graded check results, AI-scored performance
+                tasks, and per-question accuracy breakdowns.
+              </p>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => guardedAction(() => router.push(`/unit/${unit.id}/results`))}
+              >
+                View Results Dashboard
+              </Button>
+            </Card>
+          )}
+        </>
+      )}
     </div>
     </>
   );
