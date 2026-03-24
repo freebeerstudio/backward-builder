@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { StandardPopover } from "@/components/ui/StandardPopover";
 import { AuthModal } from "@/components/auth/AuthModal";
 import type { CognitiveLevel } from "@/types";
 
@@ -197,36 +198,14 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities, isOwner = true
               Aligned Standards
             </p>
             <div className="flex flex-wrap gap-2">
-              {unit.standardCodes.map((code, i) => {
-                const url = unit.standardUrls?.[i];
-                const description = unit.standardDescriptions?.[i] || "";
-                const className =
-                  "rounded-md border border-ruled bg-chalk px-2.5 py-1 font-mono text-xs font-semibold text-graphite transition";
-
-                return url ? (
-                  <a
-                    key={code}
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`${className} hover:border-ink-muted hover:bg-ink/5 hover:text-ink focus-ring`}
-                    title={`${description}\n\nClick to view standard source`}
-                  >
-                    {code}
-                    <svg className="ml-1 inline-block h-3 w-3 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                  </a>
-                ) : (
-                  <span
-                    key={code}
-                    className={className}
-                    title={description}
-                  >
-                    {code}
-                  </span>
-                );
-              })}
+              {unit.standardCodes.map((code, i) => (
+                <StandardPopover
+                  key={code}
+                  code={code}
+                  description={unit.standardDescriptions?.[i] || ""}
+                  url={unit.standardUrls?.[i]}
+                />
+              ))}
             </div>
           </div>
         )}

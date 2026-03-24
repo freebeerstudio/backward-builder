@@ -6,6 +6,12 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 
 const GRADE_LEVELS = [
+  "Pre-K",
+  "Kindergarten",
+  "1st",
+  "2nd",
+  "3rd",
+  "4th",
   "5th",
   "6th",
   "7th",
@@ -117,7 +123,7 @@ function ClassroomSetupForm() {
               <option value="">Select grade level</option>
               {GRADE_LEVELS.map((g) => (
                 <option key={g} value={g}>
-                  {g} Grade
+                  {g === "Pre-K" || g === "Kindergarten" ? g : `${g} Grade`}
                 </option>
               ))}
             </select>
