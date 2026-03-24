@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ButterflyLogo } from "@/components/ui/ButterflyLogo";
@@ -28,6 +28,19 @@ export function LandingHeader({ isAuthenticated: serverAuth, teacherName: server
   const [authMode, setAuthMode] = useState<"signup" | "signin">("signup");
   const [showDropdown, setShowDropdown] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  /* Close dropdown when clicking anywhere outside it */
+  useEffect(() => {
+    if (!showDropdown) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showDropdown]);
 
   /* Local auth state that can be updated client-side */
   const [isAuthenticated, setIsAuthenticated] = useState(serverAuth);
@@ -92,13 +105,12 @@ export function LandingHeader({ isAuthenticated: serverAuth, teacherName: server
 
           {isAuthenticated ? (
             /* Authenticated: name + avatar + dropdown */
-            <div className="relative flex items-center gap-3">
+            <div className="relative flex items-center gap-3" ref={dropdownRef}>
               <span className="hidden font-ui text-sm text-pencil sm:inline">
                 {teacherName}
               </span>
               <button
                 onClick={() => setShowDropdown(!showDropdown)}
-                onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
                 className="focus-ring flex h-8 w-8 items-center justify-center rounded-full bg-ink text-xs font-bold text-white transition hover:bg-ink-light"
                 aria-label={`Account menu for ${teacherName}`}
                 aria-expanded={showDropdown}

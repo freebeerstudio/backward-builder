@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { ButterflyLogo } from "@/components/ui/ButterflyLogo";
 
@@ -16,6 +16,7 @@ function Header() {
   const [teacherInitial, setTeacherInitial] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch("/api/auth/check")
@@ -29,6 +30,19 @@ function Header() {
       })
       .catch(() => {});
   }, []);
+
+  /* Close dropdown when clicking anywhere outside it */
+  useEffect(() => {
+    if (!showDropdown) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
+    }
+    // Use mousedown so it fires before the button's click is swallowed
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showDropdown]);
 
   async function handleLogout() {
     setLoggingOut(true);
@@ -51,7 +65,7 @@ function Header() {
         </Link>
 
         {isAuthenticated ? (
-          <div className="relative flex items-center gap-3">
+          <div className="relative flex items-center gap-3" ref={dropdownRef}>
             <Link
               href="/"
               className="focus-ring hidden rounded-lg px-3.5 py-2 font-ui text-sm font-medium text-pencil transition hover:bg-chalk hover:text-graphite sm:inline-flex"
@@ -63,7 +77,6 @@ function Header() {
             </span>
             <button
               onClick={() => setShowDropdown(!showDropdown)}
-              onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
               className="focus-ring flex h-8 w-8 items-center justify-center rounded-full bg-ink text-xs font-bold text-white transition hover:bg-ink-light"
               aria-label={`Account menu for ${teacherName}`}
               aria-expanded={showDropdown}
