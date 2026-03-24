@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AuthModal } from "@/components/auth/AuthModal";
+import { HoverSelect } from "@/components/ui/HoverSelect";
 
 const GRADES = [
   "5th Grade", "6th Grade", "7th Grade", "8th Grade",
@@ -256,53 +257,38 @@ export function HeroChatBox() {
             />
           </div>
 
-          {/* Bottom bar: dropdowns + submit */}
-          <div className="flex flex-wrap items-center gap-2 px-4 pb-3 sm:gap-3 sm:px-5 sm:pb-4">
-            {/* Grade selector */}
-            <select
+          {/* Bottom bar: hover-to-open dropdowns + submit */}
+          <div className="flex flex-wrap items-center gap-1 px-4 pb-3 sm:gap-1.5 sm:px-5 sm:pb-4">
+            <HoverSelect
               value={grade}
-              onChange={(e) => setGrade(e.target.value)}
+              onChange={setGrade}
+              placeholder="Grade"
+              options={GRADES}
               disabled={isLoading}
-              aria-label="Grade level"
-              className="h-8 appearance-none rounded-md bg-transparent px-1 font-ui text-xs font-medium text-pencil underline-offset-4 decoration-ruled transition hover:text-graphite hover:underline focus:text-graphite focus:underline focus:outline-none disabled:opacity-50 sm:text-sm cursor-pointer"
-            >
-              <option value="">Grade</option>
-              {GRADES.map((g) => (
-                <option key={g} value={g}>{g}</option>
-              ))}
-            </select>
+              ariaLabel="Grade level"
+            />
 
-            {/* Subject selector */}
-            <span className="text-pencil/30">·</span>
+            <span className="text-pencil/20 select-none">·</span>
 
-            <select
+            <HoverSelect
               value={subject}
-              onChange={(e) => setSubject(e.target.value)}
+              onChange={setSubject}
+              placeholder="Subject"
+              options={SUBJECTS}
               disabled={isLoading}
-              aria-label="Subject area"
-              className="h-8 appearance-none rounded-md bg-transparent px-1 font-ui text-xs font-medium text-pencil underline-offset-4 decoration-ruled transition hover:text-graphite hover:underline focus:text-graphite focus:underline focus:outline-none disabled:opacity-50 sm:text-sm cursor-pointer"
-            >
-              <option value="">Subject</option>
-              {SUBJECTS.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
+              ariaLabel="Subject area"
+            />
 
-            <span className="text-pencil/30">·</span>
+            <span className="text-pencil/20 select-none">·</span>
 
-            {/* State selector */}
-            <select
+            <HoverSelect
               value={state}
-              onChange={(e) => setState(e.target.value)}
+              onChange={setState}
+              placeholder="State"
+              options={STATES}
               disabled={isLoading}
-              aria-label="State standards"
-              className="h-8 appearance-none rounded-md bg-transparent px-1 font-ui text-xs font-medium text-pencil underline-offset-4 decoration-ruled transition hover:text-graphite hover:underline focus:text-graphite focus:underline focus:outline-none disabled:opacity-50 sm:text-sm cursor-pointer"
-            >
-              <option value="">State</option>
-              {STATES.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
+              ariaLabel="State standards"
+            />
 
             {/* Spacer */}
             <div className="flex-1" />
