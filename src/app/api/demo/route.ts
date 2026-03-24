@@ -49,7 +49,8 @@ export async function GET(request: Request) {
     path: "/",
   });
 
-  // Redirect to the dashboard so the judge sees both units
-  const url = new URL("/dashboard", request.url);
+  // Redirect back to the landing page — it detects the session and
+  // switches to the authenticated view (My Units / Shared / Community tabs)
+  const url = new URL("/", request.url);
   return NextResponse.redirect(url);
 }
