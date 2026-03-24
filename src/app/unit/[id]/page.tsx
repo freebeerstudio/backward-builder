@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { db } from "@/db";
 import { teachers } from "@/db/schema";
 import { resolveStandardUrls } from "@/lib/standards-urls";
+import { fetchStandardsFromCSP } from "@/lib/standards/csp-client";
 // standards-urls is the URL resolver; standards/ is the verified database
 import {
   units,
@@ -102,12 +103,48 @@ export default async function UnitPage({ params }: UnitPageProps) {
   else if (hasTasks && hasChecks) currentStage = 2;
 
   // Resolve standard URLs deterministically — never trust Claude's URLs.
-  // Falls back to stored URLs if resolver returns nothing, or generates
-  // correct URLs from the standard code pattern + state/subject context.
   const standardCodes = unit.standardCodes as string[] | null;
   const resolvedUrls = standardCodes
     ? resolveStandardUrls(standardCodes, teacher?.state || undefined, teacher?.subject || undefined)
     : null;
+
+  // Resolve CSP metadata (title, subject, education levels) for the popover.
+  // If the unit already has this data stored, use it. Otherwise fetch from
+  // CSP API at render time — this ensures ALL units get rich popovers,
+  // including ones created before we added the CSP metadata columns.
+  let setTitles = unit.standardSetTitles as (string | null)[] | null;
+  let setSubjects = unit.standardSetSubjects as (string | null)[] | null;
+  let setLevels = unit.standardSetLevels as (string[] | null)[] | null;
+
+  const hasCspMetadata = setTitles && setTitles.some((t) => t !== null);
+  if (!hasCspMetadata && standardCodes?.length && teacher?.state && teacher?.subject && teacher?.gradeLevel) {
+    try {
+      const cspStandards = await fetchStandardsFromCSP(teacher.state, teacher.subject, teacher.gradeLevel);
+      if (cspStandards && cspStandards.length > 0) {
+        // Build a lookup map from code → CSP metadata
+        const cspMap = new Map(cspStandards.map((s) => [s.code, s]));
+        // Use the first standard's set metadata as fallback for all (same set)
+        const fallback = cspStandards[0];
+        setTitles = standardCodes.map((code) => cspMap.get(code)?.setTitle || fallback.setTitle || null);
+        setSubjects = standardCodes.map((code) => cspMap.get(code)?.setSubject || fallback.setSubject || null);
+        setLevels = standardCodes.map((code) => cspMap.get(code)?.setEducationLevels || fallback.setEducationLevels || null);
+
+        // Also backfill descriptions from CSP if they're more complete
+        const storedDescriptions = unit.standardDescriptions as string[] | null;
+        if (storedDescriptions) {
+          for (let i = 0; i < standardCodes.length; i++) {
+            const cspStd = cspMap.get(standardCodes[i]);
+            if (cspStd?.description && (!storedDescriptions[i] || storedDescriptions[i].length < 10)) {
+              storedDescriptions[i] = cspStd.description;
+            }
+          }
+        }
+      }
+    } catch (e) {
+      // CSP unavailable — gracefully show without metadata
+      console.error("CSP metadata resolution failed:", e);
+    }
+  }
 
   // Serialize unit data for the client component
   const unitData = {
@@ -118,9 +155,9 @@ export default async function UnitPage({ params }: UnitPageProps) {
     standardCodes,
     standardDescriptions: unit.standardDescriptions as string[] | null,
     standardUrls: resolvedUrls,
-    standardSetTitles: unit.standardSetTitles as (string | null)[] | null,
-    standardSetSubjects: unit.standardSetSubjects as (string | null)[] | null,
-    standardSetLevels: unit.standardSetLevels as (string[] | null)[] | null,
+    standardSetTitles: setTitles,
+    standardSetSubjects: setSubjects,
+    standardSetLevels: setLevels,
     cognitiveLevel: unit.cognitiveLevel as CognitiveLevel | null,
     cognitiveLevelExplanation: unit.cognitiveLevelExplanation,
     status: unit.status,
