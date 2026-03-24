@@ -95,6 +95,20 @@ export async function POST(
 
     const validAnswers: AnswerRecord[] = [];
 
+    // Per-question results to return to the student after submission
+    interface QuestionResult {
+      questionId: string;
+      questionText: string;
+      type: "selected_response" | "short_answer";
+      points: number;
+      studentAnswer: string;
+      isCorrect: boolean | null;
+      score: number | null;
+      correctAnswer: string | null; // Revealed only after submission for MC
+    }
+
+    const questionResults: QuestionResult[] = [];
+
     for (const a of answers as { questionId: string; answer: string }[]) {
       const question = questionMap.get(a.questionId);
       if (!question) continue;
@@ -102,11 +116,8 @@ export async function POST(
       maxScore += question.points;
 
       if (question.type === "selected_response" && question.options) {
-        const result = gradeMCAnswer(
-          a.answer,
-          question.options as MCOption[],
-          question.points
-        );
+        const options = question.options as MCOption[];
+        const result = gradeMCAnswer(a.answer, options, question.points);
         totalScore += result.score;
         validAnswers.push({
           submissionId: submission.id,
@@ -114,6 +125,19 @@ export async function POST(
           answer: a.answer,
           isCorrect: result.isCorrect,
           score: result.score,
+        });
+
+        // Safe to reveal correct answer now — submission is recorded
+        const correctOption = options.find((o) => o.isCorrect);
+        questionResults.push({
+          questionId: a.questionId,
+          questionText: question.questionText,
+          type: "selected_response",
+          points: question.points,
+          studentAnswer: a.answer,
+          isCorrect: result.isCorrect,
+          score: result.score,
+          correctAnswer: correctOption?.text ?? null,
         });
       } else {
         // short_answer — store with null score for teacher review
@@ -123,6 +147,16 @@ export async function POST(
           answer: a.answer,
           isCorrect: null,
           score: null,
+        });
+        questionResults.push({
+          questionId: a.questionId,
+          questionText: question.questionText,
+          type: "short_answer",
+          points: question.points,
+          studentAnswer: a.answer,
+          isCorrect: null,
+          score: null,
+          correctAnswer: null,
         });
       }
     }
@@ -141,6 +175,7 @@ export async function POST(
       submissionId: submission.id,
       totalScore,
       maxScore,
+      questionResults,
     });
   } catch (error) {
     console.error("Failed to submit check:", error);

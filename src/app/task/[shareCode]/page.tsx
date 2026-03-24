@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
@@ -21,7 +21,24 @@ interface TaskData {
 }
 
 type SubmissionTab = "write" | "upload" | "link";
-type Step = "intro" | "task" | "submitting";
+type Step = "intro" | "task" | "submitting" | "results";
+
+// --- API result types ---
+
+interface CriterionScore {
+  criterionName: string;
+  score: number;
+  maxScore: number;
+  label: string;
+  reasoning: string;
+}
+
+interface SubmissionResult {
+  submissionId: string;
+  totalScore: number;
+  maxScore: number;
+  criterionScores: CriterionScore[];
+}
 
 // --- Accepted file types ---
 const ACCEPTED_FILES = ".pdf,.docx,.doc,.jpg,.jpeg,.png,.txt";
@@ -38,8 +55,6 @@ const PROGRESS_MESSAGES = [
 
 export default function StudentTaskPage() {
   const { shareCode } = useParams<{ shareCode: string }>();
-  const router = useRouter();
-
   const [data, setData] = useState<TaskData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -57,6 +72,7 @@ export default function StudentTaskPage() {
   const [fileName, setFileName] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [progressIndex, setProgressIndex] = useState(0);
+  const [submissionResult, setSubmissionResult] = useState<SubmissionResult | null>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -188,11 +204,11 @@ export default function StudentTaskPage() {
         throw new Error(err.error || "Submission failed");
       }
 
-      const result = await res.json();
+      const result: SubmissionResult = await res.json();
 
-      router.push(
-        `/task/${shareCode}/complete?name=${encodeURIComponent(studentName.trim())}&sid=${result.submissionId}`
-      );
+      // Show results inline instead of navigating away
+      setSubmissionResult(result);
+      setStep("results");
     } catch (err) {
       setSubmitError(
         err instanceof Error ? err.message : "Failed to submit. Please try again."
@@ -267,6 +283,18 @@ export default function StudentTaskPage() {
             ))}
           </div>
         </div>
+      </TaskShell>
+    );
+  }
+
+  // --- Results screen: AI scoring feedback ---
+  if (step === "results" && submissionResult) {
+    return (
+      <TaskShell title={data.task.title} unitTitle={data.unit.title}>
+        <TaskResults
+          result={submissionResult}
+          studentName={studentName}
+        />
       </TaskShell>
     );
   }
@@ -611,6 +639,173 @@ function LinkPreview({ url }: { url: string }) {
         </p>
         <p className="text-xs text-text-light font-body font-mono truncate">
           {trimmed.length > 50 ? trimmed.slice(0, 50) + "..." : trimmed}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// --- Performance level color mapping ---
+// Maps score/maxScore ratios to design-system-friendly colors
+
+function getPerformanceStyle(score: number, maxScore: number) {
+  const ratio = maxScore > 0 ? score / maxScore : 0;
+  if (ratio >= 1) return { bg: "bg-emerald-50", bar: "bg-emerald-500", text: "text-emerald-700", border: "border-emerald-200", icon: "text-emerald-500" };
+  if (ratio >= 0.75) return { bg: "bg-blue-50", bar: "bg-blue-500", text: "text-blue-700", border: "border-blue-200", icon: "text-blue-500" };
+  if (ratio >= 0.5) return { bg: "bg-amber-50", bar: "bg-amber-500", text: "text-amber-700", border: "border-amber-200", icon: "text-amber-500" };
+  return { bg: "bg-red-50", bar: "bg-red-500", text: "text-red-700", border: "border-red-200", icon: "text-red-500" };
+}
+
+function getOverallLabel(score: number, maxScore: number): string {
+  const ratio = maxScore > 0 ? score / maxScore : 0;
+  if (ratio >= 1) return "Exemplary";
+  if (ratio >= 0.75) return "Proficient";
+  if (ratio >= 0.5) return "Developing";
+  return "Beginning";
+}
+
+// --- Results view component ---
+
+function TaskResults({
+  result,
+  studentName,
+}: {
+  result: SubmissionResult;
+  studentName: string;
+}) {
+  const percentage = result.maxScore > 0 ? Math.round((result.totalScore / result.maxScore) * 100) : 0;
+  const overallLabel = getOverallLabel(result.totalScore, result.maxScore);
+  const overallStyle = getPerformanceStyle(result.totalScore, result.maxScore);
+
+  return (
+    <div className="space-y-6">
+      {/* Success header */}
+      <div className="text-center space-y-2">
+        <div className="h-14 w-14 mx-auto rounded-full bg-forest/10 flex items-center justify-center">
+          <svg
+            className="h-7 w-7 text-forest"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+        </div>
+        <h2 className="text-lg font-heading font-bold text-text">
+          Performance Task Submitted
+        </h2>
+        <p className="text-sm text-text-light font-body">
+          Nice work, {studentName}. Here is your AI-generated feedback.
+        </p>
+      </div>
+
+      {/* Overall score card */}
+      <div className={`rounded-xl border ${overallStyle.border} ${overallStyle.bg} p-5 space-y-3`}>
+        <div className="flex items-baseline justify-between">
+          <div>
+            <p className="text-sm font-heading font-semibold text-text">
+              Overall Score
+            </p>
+            <p className={`text-3xl font-heading font-bold ${overallStyle.text} mt-1`}>
+              {result.totalScore}/{result.maxScore}
+            </p>
+          </div>
+          <span className={`text-sm font-heading font-semibold ${overallStyle.text} px-3 py-1 rounded-full ${overallStyle.bg} border ${overallStyle.border}`}>
+            {overallLabel}
+          </span>
+        </div>
+
+        {/* Score bar */}
+        <div className="w-full h-3 rounded-full bg-white/60 overflow-hidden">
+          <div
+            className={`h-full rounded-full ${overallStyle.bar} transition-all duration-700 ease-out`}
+            style={{ width: `${percentage}%` }}
+          />
+        </div>
+        <p className="text-xs text-text-light font-body text-right">
+          {percentage}%
+        </p>
+      </div>
+
+      {/* Per-criterion breakdown */}
+      <div className="space-y-3">
+        <p className="text-sm font-heading font-semibold text-text">
+          Criterion Breakdown
+        </p>
+
+        {result.criterionScores.map((criterion, index) => {
+          const style = getPerformanceStyle(criterion.score, criterion.maxScore);
+          const pct = criterion.maxScore > 0 ? Math.round((criterion.score / criterion.maxScore) * 100) : 0;
+
+          return (
+            <div
+              key={index}
+              className={`rounded-xl border ${style.border} bg-white p-4 space-y-3`}
+            >
+              {/* Criterion header */}
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-heading font-semibold text-text">
+                  {criterion.criterionName}
+                </h3>
+                <div className="flex items-center gap-2">
+                  <span className={`text-sm font-heading font-bold ${style.text}`}>
+                    {criterion.score}/{criterion.maxScore}
+                  </span>
+                  <span className={`text-xs font-heading font-medium ${style.text} px-2 py-0.5 rounded-full ${style.bg}`}>
+                    {criterion.label}
+                  </span>
+                </div>
+              </div>
+
+              {/* Score bar */}
+              <div className="w-full h-2 rounded-full bg-warmwhite overflow-hidden">
+                <div
+                  className={`h-full rounded-full ${style.bar} transition-all duration-500 ease-out`}
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+
+              {/* AI reasoning / feedback */}
+              {criterion.reasoning && (
+                <p className="text-sm text-text-light font-body leading-relaxed">
+                  {criterion.reasoning}
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Teacher review note */}
+      <div className="rounded-lg border border-border bg-warmwhite px-4 py-3 flex items-start gap-3">
+        <svg
+          className="h-5 w-5 text-gold shrink-0 mt-0.5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+        <p className="text-xs text-text-light font-body leading-relaxed">
+          These scores were generated by AI based on the rubric criteria.
+          Your teacher may review and adjust these scores.
+        </p>
+      </div>
+
+      {/* Encouraging close */}
+      <div className="text-center pt-2">
+        <p className="text-sm font-heading font-medium text-forest">
+          Keep up the great work. Every effort builds understanding.
         </p>
       </div>
     </div>

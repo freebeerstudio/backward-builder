@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
@@ -29,7 +29,25 @@ interface CheckData {
   questions: CheckQuestion[];
 }
 
-type Step = "intro" | "questions" | "review" | "submitting";
+type Step = "intro" | "questions" | "review" | "submitting" | "results";
+
+interface QuestionResult {
+  questionId: string;
+  questionText: string;
+  type: "selected_response" | "short_answer";
+  points: number;
+  studentAnswer: string;
+  isCorrect: boolean | null;
+  score: number | null;
+  correctAnswer: string | null;
+}
+
+interface SubmissionResult {
+  submissionId: string;
+  totalScore: number;
+  maxScore: number;
+  questionResults: QuestionResult[];
+}
 
 // --- Option letter labels ---
 const OPTION_LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H"];
@@ -38,7 +56,6 @@ const OPTION_LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H"];
 
 export default function StudentCheckPage() {
   const { shareCode } = useParams<{ shareCode: string }>();
-  const router = useRouter();
 
   const [data, setData] = useState<CheckData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -53,6 +70,7 @@ export default function StudentCheckPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submissionResult, setSubmissionResult] = useState<SubmissionResult | null>(null);
 
   // Fetch check data
   useEffect(() => {
@@ -112,9 +130,9 @@ export default function StudentCheckPage() {
         throw new Error(err.error || "Submission failed");
       }
 
-      router.push(
-        `/check/${shareCode}/complete?name=${encodeURIComponent(studentName.trim())}`
-      );
+      const result: SubmissionResult = await res.json();
+      setSubmissionResult(result);
+      setStep("results");
     } catch (err) {
       setSubmitError(
         err instanceof Error ? err.message : "Failed to submit. Please try again."
@@ -232,6 +250,193 @@ export default function StudentCheckPage() {
           <LoadingSpinner size="lg" />
           <p className="text-text-light font-body text-sm">
             Submitting your answers...
+          </p>
+        </div>
+      </StudentShell>
+    );
+  }
+
+  // --- Results screen (shown after successful submission) ---
+  if (step === "results" && submissionResult) {
+    const { totalScore, maxScore, questionResults } = submissionResult;
+    const percentage = maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0;
+
+    // Auto-graded MC totals (exclude teacher-reviewed short answer)
+    const mcResults = questionResults.filter((r) => r.type === "selected_response");
+    const mcCorrect = mcResults.filter((r) => r.isCorrect === true).length;
+    const hasShortAnswer = questionResults.some((r) => r.type === "short_answer");
+
+    // Encouraging message based on score
+    let encouragement: string;
+    if (percentage >= 90) {
+      encouragement = "Outstanding work! You demonstrated a strong understanding.";
+    } else if (percentage >= 75) {
+      encouragement = "Good job! You're on the right track with your understanding.";
+    } else if (percentage >= 60) {
+      encouragement = "Nice effort! Review the questions you missed to strengthen your understanding.";
+    } else {
+      encouragement = "Keep going! This check helps your teacher know where to focus next.";
+    }
+
+    return (
+      <StudentShell title={data.check.title} unitTitle={data.check.unitTitle}>
+        <div className="space-y-8">
+          {/* Score header */}
+          <div className="text-center space-y-4">
+            {/* Checkmark icon */}
+            <div className="mx-auto h-16 w-16 rounded-full bg-emerald-100 flex items-center justify-center">
+              <svg
+                className="h-8 w-8 text-emerald-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+
+            <div className="space-y-1">
+              <h2 className="text-xl font-heading font-bold text-text">
+                Check Submitted
+              </h2>
+              <p className="text-sm text-text-light font-body">
+                Thanks, <span className="font-semibold">{studentName}</span>.
+              </p>
+            </div>
+
+            {/* Score display */}
+            <div className="inline-flex flex-col items-center gap-1 px-6 py-4 rounded-xl bg-warmwhite border border-border">
+              <span className="text-3xl font-heading font-bold text-forest">
+                {totalScore}<span className="text-lg text-text-light">/{maxScore}</span>
+              </span>
+              <span className="text-sm font-body text-text-light">
+                {percentage}% {hasShortAnswer ? "(auto-graded portion)" : ""}
+              </span>
+            </div>
+
+            <p className="text-sm font-body text-text-light leading-relaxed max-w-sm mx-auto">
+              {encouragement}
+            </p>
+          </div>
+
+          {/* Per-question breakdown */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-heading font-semibold text-text uppercase tracking-wide">
+              Question Breakdown
+            </h3>
+
+            <div className="space-y-3">
+              {questionResults.map((result, i) => (
+                <div
+                  key={result.questionId}
+                  className="rounded-xl border border-border bg-white p-4 space-y-3"
+                >
+                  {/* Question header with status indicator */}
+                  <div className="flex items-start gap-3">
+                    <div className="shrink-0 mt-0.5">
+                      {result.type === "short_answer" ? (
+                        /* Pending review — amber clock icon */
+                        <div className="h-7 w-7 rounded-full bg-amber-100 flex items-center justify-center">
+                          <svg className="h-4 w-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                      ) : result.isCorrect ? (
+                        /* Correct — green check */
+                        <div className="h-7 w-7 rounded-full bg-emerald-100 flex items-center justify-center">
+                          <svg className="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      ) : (
+                        /* Incorrect — red X */
+                        <div className="h-7 w-7 rounded-full bg-red-100 flex items-center justify-center">
+                          <svg className="h-4 w-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <span className="text-xs font-heading font-semibold text-text-light">
+                          Question {i + 1}
+                        </span>
+                        <span className="text-xs font-body text-text-light">
+                          {result.score !== null ? result.score : "?"}/{result.points} pt{result.points !== 1 ? "s" : ""}
+                        </span>
+                      </div>
+                      <p className="text-sm font-body text-text leading-relaxed">
+                        {result.questionText}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Answer details */}
+                  <div className="ml-10 space-y-2">
+                    {/* Student's answer */}
+                    <div className="flex items-start gap-2">
+                      <span className="text-xs font-heading font-semibold text-text-light shrink-0 mt-0.5 w-20">
+                        Your answer
+                      </span>
+                      <span className={`text-sm font-body leading-relaxed ${
+                        result.type === "short_answer"
+                          ? "text-text"
+                          : result.isCorrect
+                            ? "text-emerald-700 font-medium"
+                            : "text-red-600 font-medium"
+                      }`}>
+                        {result.studentAnswer || <span className="italic text-text-light">No answer</span>}
+                      </span>
+                    </div>
+
+                    {/* Show correct answer for wrong MC answers */}
+                    {result.type === "selected_response" && !result.isCorrect && result.correctAnswer && (
+                      <div className="flex items-start gap-2">
+                        <span className="text-xs font-heading font-semibold text-text-light shrink-0 mt-0.5 w-20">
+                          Correct
+                        </span>
+                        <span className="text-sm font-body text-emerald-700 font-medium leading-relaxed">
+                          {result.correctAnswer}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Pending review note for short answer */}
+                    {result.type === "short_answer" && (
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200">
+                        <span className="text-xs font-body text-amber-700">
+                          Your teacher will review and score this response.
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* MC summary if applicable */}
+          {mcResults.length > 0 && (
+            <div className="text-center text-xs font-body text-text-light">
+              Multiple choice: {mcCorrect} of {mcResults.length} correct
+              {hasShortAnswer && " · Short answers pending teacher review"}
+            </div>
+          )}
+
+          {/* Submission confirmation badge */}
+          <div className="text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-forest/5 text-forest text-xs font-heading font-semibold">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              Submission recorded
+            </div>
+          </div>
+
+          {/* Close notice */}
+          <p className="text-center text-xs text-text-light font-body">
+            You can close this page now.
           </p>
         </div>
       </StudentShell>
