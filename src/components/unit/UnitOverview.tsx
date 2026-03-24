@@ -184,9 +184,8 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities, isOwner = true
 
         {/* Classroom context line */}
         {(gradeLevel || subject || state) && (
-          <p className="font-ui text-xs text-pencil/70 italic mb-2">
-            Based on the{state ? ` ${state}` : ""}{" "}
-            {subject ? `state standards for ${gradeLevel ? `${gradeLevel.toLowerCase()} ` : ""}${subject.toLowerCase()}` : gradeLevel || ""}
+          <p className="font-ui text-sm text-pencil italic mb-3">
+            Based on {state || "state"} standards for {gradeLevel ? `${gradeLevel} ` : ""}{subject || "this subject"}
           </p>
         )}
 
