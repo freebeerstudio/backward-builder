@@ -102,30 +102,44 @@ export async function analyzeUnderstanding(
   subject: string,
   state: string
 ): Promise<UnderstandingAnalysis> {
+  // Import the verified standards database — Claude must ONLY select from these
+  const { formatStandardsForPrompt } = await import("@/lib/standards");
+
+  const standardsBlock = formatStandardsForPrompt(state, subject, grade);
+
   const systemPrompt = `${UBD_EXPERT}
 
-You are analyzing a teacher's enduring understanding to lay the foundation for a UbD unit. Your analysis must be precise, actionable, and grounded in real state standards.`;
+You are analyzing a teacher's enduring understanding to lay the foundation for a UbD unit.
+
+CRITICAL RULE — STANDARDS INTEGRITY:
+You will be given a list of VERIFIED standards. You MUST only use standard codes and descriptions from that list. NEVER invent, hallucinate, or approximate a standard code. If no standards are provided (because we don't have verified data for this state/subject), set standardCodes and standardDescriptions to empty arrays.`;
 
   const userPrompt = `Analyze this enduring understanding for a ${grade} ${subject} class in ${state}:
 
 "${understanding}"
 
+=== VERIFIED STANDARDS ===
+${standardsBlock}
+=== END VERIFIED STANDARDS ===
+
 Return a JSON object with this exact schema:
 {
   "title": "string — a concise unit title derived from the enduring understanding",
   "essentialQuestions": ["string — 2-3 open-ended questions that drive inquiry toward this understanding"],
-  "standardCodes": ["string — 2-4 specific ${state} state standard codes this aligns to (e.g., '7.LS2.A', 'CCSS.ELA-LITERACY.RH.6-8.2', 'NGSS MS-ESS2-1')"],
-  "standardDescriptions": ["string — the full text of each standard listed above"],
-  "standardUrls": ["string — a URL to the authoritative source page for each standard above. Use the official state department of education standards page, NGSS, or Common Core site. Each URL must correspond to the standard at the same index in standardCodes."],
+  "standardCodes": ["string — 2-4 codes selected ONLY from the verified standards list above. If no standards were provided, use an empty array []."],
+  "standardDescriptions": ["string — the EXACT description text for each standard code you selected, copied verbatim from the list above"],
+  "standardUrls": [],
   "cognitiveLevel": "string — one of: remember, understand, apply, analyze, evaluate, create",
   "cognitiveLevelExplanation": "string — 1 sentence explaining why this understanding sits at this Bloom's level",
   "reflectionForTeacher": "string — 1-2 sentences of warm, constructive feedback on the enduring understanding's clarity and scope"
 }
 
 Guidelines:
-- Essential questions should be debatable and thought-provoking, not yes/no. For example, "How do changes in one part of an ecosystem ripple through the entire food web?" rather than "What is a food web?"
-- Standard codes must be real codes from ${state}'s adopted standards framework for ${subject}.
+- Essential questions should be debatable and thought-provoking, not yes/no.
+- Standard codes MUST come from the verified list above — never invent codes.
+- Copy standard descriptions EXACTLY as provided — do not paraphrase.
 - The cognitive level should reflect the deepest thinking the enduring understanding demands.
+- Set standardUrls to an empty array [] — URLs are handled by our system, not by you.
 
 Return ONLY valid JSON.`;
 
@@ -133,16 +147,20 @@ Return ONLY valid JSON.`;
     systemPrompt,
     userPrompt,
     maxTokens: 1024,
-    temperature: 0.5,
+    temperature: 0.3, // Lower temperature for more faithful standard selection
     validate: (parsed: unknown) => {
       const data = parsed as Record<string, unknown>;
       if (
         !data.title ||
         !Array.isArray(data.essentialQuestions) ||
-        !Array.isArray(data.standardCodes) ||
         !data.cognitiveLevel
       ) {
         throw new Error("Invalid UnderstandingAnalysis: missing required fields");
+      }
+      // Ensure standardCodes is at least an empty array (never undefined)
+      if (!Array.isArray(data.standardCodes)) {
+        data.standardCodes = [];
+        data.standardDescriptions = [];
       }
       return data as unknown as UnderstandingAnalysis;
     },

@@ -4,7 +4,7 @@ import { teachers, units } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getOrCreateSessionId } from "@/lib/teacher-session";
 import { analyzeUnderstanding } from "@/lib/claude";
-import { resolveStandardUrls } from "@/lib/standards-urls";
+import { validateStandardCodes } from "@/lib/standards";
 
 /**
  * POST /api/unit/create — Create a new unit from an enduring understanding.
@@ -59,15 +59,21 @@ export async function POST(request: Request) {
       teacher.state
     );
 
-    // Use our deterministic resolver for standard URLs instead of
-    // trusting Claude — it hallucinates URLs for state-specific standards.
-    const verifiedUrls = resolveStandardUrls(
-      analysis.standardCodes,
+    // INTEGRITY CHECK: Validate that every standard Claude selected actually
+    // exists in our verified database. Drop any that don't — better to show
+    // fewer standards than to show hallucinated ones.
+    const verifiedStandards = validateStandardCodes(
+      analysis.standardCodes || [],
       teacher.state,
-      teacher.subject
+      teacher.subject,
+      teacher.gradeLevel
     );
 
-    // Create the unit record with all AI-generated fields
+    const validCodes = verifiedStandards.map((s) => s.code);
+    const validDescriptions = verifiedStandards.map((s) => s.description);
+    const validUrls = verifiedStandards.map((s) => s.url);
+
+    // Create the unit record with ONLY verified standards
     const [unit] = await db
       .insert(units)
       .values({
@@ -75,9 +81,9 @@ export async function POST(request: Request) {
         title: analysis.title,
         enduringUnderstanding: enduringUnderstanding.trim(),
         essentialQuestions: analysis.essentialQuestions,
-        standardCodes: analysis.standardCodes,
-        standardDescriptions: analysis.standardDescriptions,
-        standardUrls: verifiedUrls,
+        standardCodes: validCodes,
+        standardDescriptions: validDescriptions,
+        standardUrls: validUrls,
         cognitiveLevel: analysis.cognitiveLevel,
         cognitiveLevelExplanation: analysis.cognitiveLevelExplanation,
         status: "stage1",
