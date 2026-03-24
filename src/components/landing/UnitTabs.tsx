@@ -61,8 +61,10 @@ export function UnitTabs({
     { key: "community", label: "Community", count: communityUnits.length },
   ];
 
-  const activeUnits =
-    activeTab === "my-units"
+  /* Unauthenticated users always see community units regardless of tab state */
+  const activeUnits = !isAuthenticated
+    ? communityUnits
+    : activeTab === "my-units"
       ? myUnits
       : activeTab === "shared"
         ? sharedUnits

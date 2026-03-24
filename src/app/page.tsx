@@ -42,9 +42,9 @@ function guessSubjectLabel(eu: string, subject?: string | null): string {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Static community units (shown to everyone)                         */
+/*  Static fallback community units (shown when DB has no public units) */
 /* ------------------------------------------------------------------ */
-const COMMUNITY_UNITS: UnitCardData[] = [
+const FALLBACK_COMMUNITY_UNITS: UnitCardData[] = [
   { id: "c1", title: "Ecosystem Interdependence", description: "Trophic cascades and the Yellowstone wolf reintroduction", subject: "Science", grade: "7th", teacher: "Mrs. Crabapple", initial: "C", uses: 142, color: "var(--color-subj-science)", href: "/api/demo" },
   { id: "c2", title: "Causes of the American Revolution", description: "Economic, political, and ideological tensions leading to independence", subject: "History", grade: "8th", teacher: "Mr. Rodriguez", initial: "R", uses: 98, color: "var(--color-subj-history)", href: "/api/demo" },
   { id: "c3", title: "Persuasive Writing & Rhetoric", description: "Analyzing persuasion techniques across speeches and editorials", subject: "ELA", grade: "6th", teacher: "Ms. Chen", initial: "C", uses: 217, color: "var(--color-subj-ela)", href: "/api/demo" },
@@ -109,7 +109,37 @@ export default async function Home() {
     }
   }
 
-  /* Butterfly logo — reused in header and footer */
+  /* Fetch public community units from DB */
+  const publicUnitsRaw = await db
+    .select({
+      id: units.id,
+      title: units.title,
+      enduringUnderstanding: units.enduringUnderstanding,
+      status: units.status,
+      teacherName: teachers.displayName,
+      teacherSubject: teachers.subject,
+      teacherGrade: teachers.gradeLevel,
+    })
+    .from(units)
+    .innerJoin(teachers, eq(units.teacherId, teachers.id))
+    .where(eq(units.isPublic, true))
+    .orderBy(desc(units.updatedAt))
+    .limit(12);
+
+  const communityUnits: UnitCardData[] = publicUnitsRaw.length > 0
+    ? publicUnitsRaw.map((u) => ({
+        id: u.id,
+        title: u.title,
+        description: u.enduringUnderstanding.slice(0, 120) + (u.enduringUnderstanding.length > 120 ? "…" : ""),
+        subject: guessSubjectLabel(u.enduringUnderstanding, u.teacherSubject),
+        grade: u.teacherGrade || "—",
+        teacher: u.teacherName || "Teacher",
+        initial: (u.teacherName?.[0] || "T").toUpperCase(),
+        status: u.status,
+        color: guessSubjectColor(u.enduringUnderstanding, u.teacherSubject),
+        href: `/unit/${u.id}`,
+      }))
+    : FALLBACK_COMMUNITY_UNITS;
 
   return (
     <div className="min-h-screen bg-cream font-ui">
@@ -148,7 +178,7 @@ export default async function Home() {
         isAuthenticated={isAuthenticated}
         myUnits={myUnits}
         sharedUnits={isAuthenticated ? SHARED_UNITS : []}
-        communityUnits={COMMUNITY_UNITS}
+        communityUnits={communityUnits}
         teacherName={teacherName || undefined}
       />
 

@@ -838,7 +838,7 @@ async function seed() {
   console.log("3. Creating Unit 1: Ecosystem Interdependence...");
 
   await sql`
-    INSERT INTO units (id, teacher_id, title, enduring_understanding, essential_questions, standard_codes, standard_descriptions, standard_urls, cognitive_level, cognitive_level_explanation, status)
+    INSERT INTO units (id, teacher_id, title, enduring_understanding, essential_questions, standard_codes, standard_descriptions, standard_urls, cognitive_level, cognitive_level_explanation, status, is_public)
     VALUES (
       ${UNIT_1_ID},
       ${TEACHER_ID},
@@ -860,7 +860,8 @@ async function seed() {
       ])}::jsonb,
       'analyze',
       'Students must analyze cause-and-effect relationships across multiple trophic levels — not just identify organisms, but predict system-level consequences.',
-      'complete'
+      'complete',
+      true
     )
   `;
 
@@ -1124,7 +1125,7 @@ async function seed() {
   console.log("9. Creating Unit 2: Causes of the American Revolution...");
 
   await sql`
-    INSERT INTO units (id, teacher_id, title, enduring_understanding, essential_questions, standard_codes, standard_descriptions, standard_urls, cognitive_level, cognitive_level_explanation, status)
+    INSERT INTO units (id, teacher_id, title, enduring_understanding, essential_questions, standard_codes, standard_descriptions, standard_urls, cognitive_level, cognitive_level_explanation, status, is_public)
     VALUES (
       ${UNIT_2_ID},
       ${TEACHER_ID},
@@ -1148,7 +1149,8 @@ async function seed() {
       ])}::jsonb,
       'analyze',
       'Students must analyze the interplay between multiple categories of causes (economic, political, ideological) and evaluate their relative significance — not just memorize a timeline of events.',
-      'stage2'
+      'stage2',
+      true
     )
   `;
 

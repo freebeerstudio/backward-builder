@@ -81,6 +81,7 @@ export const units = pgTable("units", {
   cognitiveLevel: cognitiveLevelEnum("cognitive_level"),
   cognitiveLevelExplanation: text("cognitive_level_explanation"),
   status: unitStatusEnum("status").default("stage1").notNull(),
+  isPublic: boolean("is_public").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
