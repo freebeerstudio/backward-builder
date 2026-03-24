@@ -27,8 +27,9 @@ export function LandingHeader({ isAuthenticated, teacherName, teacherInitial }: 
 
   async function handleLogout() {
     setLoggingOut(true);
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.refresh();
+    // Use GET logout which clears cookie + redirects — hard navigation
+    // ensures the server component re-renders with no session
+    window.location.href = "/api/auth/logout";
   }
 
   function handleAuthSuccess() {
