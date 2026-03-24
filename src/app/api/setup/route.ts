@@ -41,7 +41,6 @@ export async function POST(request: Request) {
 
     const sessionId = await getOrCreateSessionId();
     const standardsFramework = deriveStandardsFramework(subject, state);
-    const displayName = `${gradeLevel} ${subject} Teacher`;
 
     // Check if teacher already exists for this session
     const existing = await db
@@ -51,9 +50,12 @@ export async function POST(request: Request) {
       .limit(1);
 
     let teacherId: string;
+    let displayName: string;
 
     if (existing.length > 0) {
-      // Update existing teacher record
+      // Update classroom context but PRESERVE the teacher's display name.
+      // The display name is their identity (set during signup or seeding).
+      // We only update grade/subject/state/framework for the new unit.
       await db
         .update(teachers)
         .set({
@@ -61,12 +63,13 @@ export async function POST(request: Request) {
           subject,
           state,
           standardsFramework,
-          displayName,
         })
         .where(eq(teachers.sessionId, sessionId));
       teacherId = existing[0].id;
+      displayName = existing[0].displayName || `${gradeLevel} ${subject} Teacher`;
     } else {
-      // Create new teacher record
+      // Create new teacher record — generate a default display name
+      displayName = `${gradeLevel} ${subject} Teacher`;
       const [newTeacher] = await db
         .insert(teachers)
         .values({
