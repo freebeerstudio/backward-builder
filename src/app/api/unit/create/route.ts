@@ -4,6 +4,7 @@ import { teachers, units } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getOrCreateSessionId } from "@/lib/teacher-session";
 import { analyzeUnderstanding } from "@/lib/claude";
+import { resolveStandardUrls } from "@/lib/standards-urls";
 
 /**
  * POST /api/unit/create — Create a new unit from an enduring understanding.
@@ -58,6 +59,14 @@ export async function POST(request: Request) {
       teacher.state
     );
 
+    // Use our deterministic resolver for standard URLs instead of
+    // trusting Claude — it hallucinates URLs for state-specific standards.
+    const verifiedUrls = resolveStandardUrls(
+      analysis.standardCodes,
+      teacher.state,
+      teacher.subject
+    );
+
     // Create the unit record with all AI-generated fields
     const [unit] = await db
       .insert(units)
@@ -68,7 +77,7 @@ export async function POST(request: Request) {
         essentialQuestions: analysis.essentialQuestions,
         standardCodes: analysis.standardCodes,
         standardDescriptions: analysis.standardDescriptions,
-        standardUrls: analysis.standardUrls,
+        standardUrls: verifiedUrls,
         cognitiveLevel: analysis.cognitiveLevel,
         cognitiveLevelExplanation: analysis.cognitiveLevelExplanation,
         status: "stage1",

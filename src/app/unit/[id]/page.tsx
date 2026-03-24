@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { db } from "@/db";
+import { teachers } from "@/db/schema";
+import { resolveStandardUrls } from "@/lib/standards-urls";
 import {
   units,
   performanceTasks,
@@ -64,6 +66,13 @@ export default async function UnitPage({ params }: UnitPageProps) {
     notFound();
   }
 
+  // Fetch teacher for state/subject context (needed for standards URL resolution)
+  const [teacher] = await db
+    .select({ state: teachers.state, subject: teachers.subject })
+    .from(teachers)
+    .where(eq(teachers.id, unit.teacherId))
+    .limit(1);
+
   const hasTasks = tasks.length > 0;
   const hasChecks = checks.length > 0;
   const hasActivities = activities.length > 0;
@@ -77,15 +86,23 @@ export default async function UnitPage({ params }: UnitPageProps) {
   if (hasActivities) currentStage = 3;
   else if (hasTasks && hasChecks) currentStage = 2;
 
+  // Resolve standard URLs deterministically — never trust Claude's URLs.
+  // Falls back to stored URLs if resolver returns nothing, or generates
+  // correct URLs from the standard code pattern + state/subject context.
+  const standardCodes = unit.standardCodes as string[] | null;
+  const resolvedUrls = standardCodes
+    ? resolveStandardUrls(standardCodes, teacher?.state || undefined, teacher?.subject || undefined)
+    : null;
+
   // Serialize unit data for the client component
   const unitData = {
     id: unit.id,
     title: unit.title,
     enduringUnderstanding: unit.enduringUnderstanding,
     essentialQuestions: unit.essentialQuestions as string[] | null,
-    standardCodes: unit.standardCodes as string[] | null,
+    standardCodes,
     standardDescriptions: unit.standardDescriptions as string[] | null,
-    standardUrls: unit.standardUrls as string[] | null,
+    standardUrls: resolvedUrls,
     cognitiveLevel: unit.cognitiveLevel as CognitiveLevel | null,
     cognitiveLevelExplanation: unit.cognitiveLevelExplanation,
     status: unit.status,
