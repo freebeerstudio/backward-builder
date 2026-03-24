@@ -105,7 +105,8 @@ export async function analyzeUnderstanding(
   // Import the verified standards database — Claude must ONLY select from these
   const { formatStandardsForPrompt } = await import("@/lib/standards");
 
-  const standardsBlock = formatStandardsForPrompt(state, subject, grade);
+  // formatStandardsForPrompt is async — it may fetch from CSP API
+  const standardsBlock = await formatStandardsForPrompt(state, subject, grade);
 
   const systemPrompt = `${UBD_EXPERT}
 

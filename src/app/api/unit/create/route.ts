@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     // INTEGRITY CHECK: Validate that every standard Claude selected actually
     // exists in our verified database. Drop any that don't — better to show
     // fewer standards than to show hallucinated ones.
-    const verifiedStandards = validateStandardCodes(
+    const verifiedStandards = await validateStandardCodes(
       analysis.standardCodes || [],
       teacher.state,
       teacher.subject,
