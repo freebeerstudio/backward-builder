@@ -3,22 +3,36 @@ import { cookies } from "next/headers";
 
 /**
  * POST /api/auth/logout — Clear the teacher session cookie.
- * Redirects back to the landing page in its unauthenticated state.
  */
 export async function POST() {
   const cookieStore = await cookies();
-  cookieStore.delete("teacher_session");
+  cookieStore.set("teacher_session", "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 0, // Expire immediately
+    path: "/",
+  });
 
   return NextResponse.json({ success: true });
 }
 
 /**
- * GET /api/auth/logout — For simple link-based logout.
+ * GET /api/auth/logout — For link-based logout.
+ * Sets cookie to expire immediately, then redirects to home.
  */
 export async function GET(request: Request) {
-  const cookieStore = await cookies();
-  cookieStore.delete("teacher_session");
-
   const url = new URL("/", request.url);
-  return NextResponse.redirect(url);
+  const response = NextResponse.redirect(url);
+
+  // Explicitly expire the cookie on the response
+  response.cookies.set("teacher_session", "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 0,
+    path: "/",
+  });
+
+  return response;
 }
