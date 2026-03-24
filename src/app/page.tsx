@@ -5,6 +5,7 @@ import { teachers, units } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { HeroChatBox } from "@/components/landing/HeroChatBox";
 import { UnitTabs, type UnitCardData } from "@/components/landing/UnitTabs";
+import { ButterflyLogo } from "@/components/ui/ButterflyLogo";
 
 /**
  * Landing page — single-page app with auth-aware layout.
@@ -107,16 +108,7 @@ export default async function Home() {
     }
   }
 
-  /* Logo SVG — reused in header and footer */
-  const logoSvg = (
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true" className="text-ink">
-      <path
-        d="M3 7.5C3 6.12 4.12 5 5.5 5H11c1.1 0 2.1.45 2.83 1.17L14 6.5l.17-.33C14.9 5.45 15.9 5 17 5h5.5C23.88 5 25 6.12 25 7.5V21c0 1.38-1.12 2.5-2.5 2.5H17c-1.1 0-2.1.45-2.83 1.17l-.17.33-.17-.33C13.1 23.95 12.1 23.5 11 23.5H5.5C4.12 23.5 3 22.38 3 21V7.5z"
-        stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
-      />
-      <path d="M14 6.5V24" stroke="currentColor" strokeWidth="1.8" />
-    </svg>
-  );
+  /* Butterfly logo — reused in header and footer */
 
   return (
     <div className="min-h-screen bg-cream font-ui">
@@ -124,7 +116,7 @@ export default async function Home() {
       <header className="sticky top-0 z-50 border-b border-ruled/60 bg-paper/80 backdrop-blur-md">
         <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3.5 sm:px-6">
           <Link href="/" className="focus-ring flex items-center gap-2" aria-label="Backward Builder home">
-            {logoSvg}
+            <ButterflyLogo size={28} className="text-ink" />
             <span className="font-display text-xl text-ink sm:text-2xl">Backward Builder</span>
           </Link>
 
@@ -206,13 +198,7 @@ export default async function Home() {
             {/* Logo column */}
             <div className="lg:col-span-1">
               <Link href="/" className="inline-flex items-center gap-2" aria-label="Home">
-                <svg width="24" height="24" viewBox="0 0 28 28" fill="none" aria-hidden="true" className="text-ink">
-                  <path
-                    d="M3 7.5C3 6.12 4.12 5 5.5 5H11c1.1 0 2.1.45 2.83 1.17L14 6.5l.17-.33C14.9 5.45 15.9 5 17 5h5.5C23.88 5 25 6.12 25 7.5V21c0 1.38-1.12 2.5-2.5 2.5H17c-1.1 0-2.1.45-2.83 1.17l-.17.33-.17-.33C13.1 23.95 12.1 23.5 11 23.5H5.5C4.12 23.5 3 22.38 3 21V7.5z"
-                    stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
-                  />
-                  <path d="M14 6.5V24" stroke="currentColor" strokeWidth="1.8" />
-                </svg>
+                <ButterflyLogo size={24} className="text-ink" />
                 <span className="font-display text-lg text-ink">Backward Builder</span>
               </Link>
               <p className="mt-3 max-w-xs text-sm leading-relaxed text-pencil">

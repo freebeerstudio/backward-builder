@@ -1,0 +1,20 @@
+<svg width="32" height="32" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <g transform="translate(150, 155)" stroke="#1a1a19" fill="none" stroke-linecap="round">
+    <!-- Body -->
+    <line x1="0" y1="-80" x2="0" y2="90" stroke-width="8"/>
+    <!-- Left antenna -->
+    <path d="M0,-80 Q-30,-120 -45,-128" stroke-width="5"/>
+    <circle cx="-47" cy="-130" r="7" fill="#1a1a19"/>
+    <!-- Right antenna -->
+    <path d="M0,-80 Q30,-120 45,-128" stroke-width="5"/>
+    <circle cx="47" cy="-130" r="7" fill="#1a1a19"/>
+    <!-- Right wing: forward B -->
+    <path d="M10,-70 L10,70" stroke-width="5"/>
+    <path d="M10,-70 C90,-70 90,0 10,0" stroke-width="5"/>
+    <path d="M10,0 C100,0 100,70 10,70" stroke-width="5"/>
+    <!-- Left wing: backward B -->
+    <path d="M-10,-70 L-10,70" stroke-width="5"/>
+    <path d="M-10,-70 C-90,-70 -90,0 -10,0" stroke-width="5"/>
+    <path d="M-10,0 C-100,0 -100,70 -10,70" stroke-width="5"/>
+  </g>
+</svg>
