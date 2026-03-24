@@ -219,23 +219,28 @@ async function findJurisdictionId(stateName: string): Promise<string | null> {
 
 /**
  * Fetch a jurisdiction's standard sets and find the one matching
- * the given subject and grade.
+ * the given subject and grade. Returns both the set ID and jurisdiction title.
  */
-async function findStandardSetId(
+async function findStandardSet(
   jurisdictionId: string,
   subject: string,
   grade: string
-): Promise<string | null> {
+): Promise<{ setId: string; jurisdictionTitle: string } | null> {
+  let jurisdiction: CSPJurisdiction;
+
   if (jurisdictionCache.has(jurisdictionId)) {
-    const cached = jurisdictionCache.get(jurisdictionId)!;
-    return pickBestSet(cached.standardSets, subject, grade);
+    jurisdiction = jurisdictionCache.get(jurisdictionId)!;
+  } else {
+    const data = await fetchCSP<{ data: CSPJurisdiction }>(`/jurisdictions/${jurisdictionId}`);
+    if (!data?.data) return null;
+    jurisdictionCache.set(jurisdictionId, data.data);
+    jurisdiction = data.data;
   }
 
-  const data = await fetchCSP<{ data: CSPJurisdiction }>(`/jurisdictions/${jurisdictionId}`);
-  if (!data?.data) return null;
+  const setId = pickBestSet(jurisdiction.standardSets, subject, grade);
+  if (!setId) return null;
 
-  jurisdictionCache.set(jurisdictionId, data.data);
-  return pickBestSet(data.data.standardSets, subject, grade);
+  return { setId, jurisdictionTitle: jurisdiction.title };
 }
 
 /** Pick the best matching standard set from a jurisdiction's sets */
@@ -265,18 +270,31 @@ function pickBestSet(
 
 /**
  * Fetch all standards from a standard set and convert to VerifiedStandard[].
+ *
+ * The jurisdictionTitle (e.g., "Missouri") is combined with the set's own
+ * subject to create a meaningful display title like "Missouri Social Studies"
+ * rather than the CSP set title which is often just "Grade 7".
  */
-async function fetchStandardSet(setId: string): Promise<VerifiedStandard[]> {
-  if (standardSetCache.has(setId)) {
-    return standardSetCache.get(setId)!;
+async function fetchStandardSet(setId: string, jurisdictionTitle?: string): Promise<VerifiedStandard[]> {
+  // Cache key includes jurisdiction to avoid stale titles
+  const cacheKey = jurisdictionTitle ? `${setId}:${jurisdictionTitle}` : setId;
+  if (standardSetCache.has(cacheKey)) {
+    return standardSetCache.get(cacheKey)!;
   }
 
   const data = await fetchCSP<{ data: CSPStandardSetFull }>(`/standard_sets/${setId}`);
   if (!data?.data?.standards) return [];
 
-  const setTitle = data.data.title;
+  const rawSetTitle = data.data.title;
   const setSubject = data.data.subject;
   const setEducationLevels = data.data.educationLevels;
+
+  // Build a meaningful display title from jurisdiction + subject.
+  // CSP set titles are often generic ("Grade 7") so we construct a better one:
+  // "Missouri Social Studies" or "California English Language Arts"
+  const displayTitle = jurisdictionTitle
+    ? `${jurisdictionTitle} ${setSubject || rawSetTitle}`
+    : rawSetTitle;
 
   const standards: VerifiedStandard[] = Object.values(data.data.standards)
     .filter((s) => s.statementNotation && s.description) // Must have a code
@@ -284,13 +302,13 @@ async function fetchStandardSet(setId: string): Promise<VerifiedStandard[]> {
       code: s.statementNotation!,
       description: s.description.replace(/<[^>]*>/g, "").trim(), // Strip HTML tags
       url: null, // CSP doesn't provide source URLs — we resolve separately
-      setTitle,
+      setTitle: displayTitle,
       setSubject,
       setEducationLevels,
     }))
     .sort((a, b) => a.code.localeCompare(b.code));
 
-  standardSetCache.set(setId, standards);
+  standardSetCache.set(cacheKey, standards);
   return standards;
 }
 
@@ -316,17 +334,17 @@ export async function fetchStandardsFromCSP(
       return null;
     }
 
-    // Step 2: Find the matching standard set
-    const setId = await findStandardSetId(jurisdictionId, subject, grade);
-    if (!setId) {
+    // Step 2: Find the matching standard set + jurisdiction title
+    const result = await findStandardSet(jurisdictionId, subject, grade);
+    if (!result) {
       console.log(`CSP: No standard set found for ${state} / ${subject} / grade ${grade}`);
       return null;
     }
 
-    // Step 3: Fetch the standards
-    const standards = await fetchStandardSet(setId);
+    // Step 3: Fetch the standards with jurisdiction context for display titles
+    const standards = await fetchStandardSet(result.setId, result.jurisdictionTitle);
     if (standards.length === 0) {
-      console.log(`CSP: Standard set ${setId} returned no standards`);
+      console.log(`CSP: Standard set ${result.setId} returned no standards`);
       return null;
     }
 
