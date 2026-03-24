@@ -56,7 +56,7 @@ export async function GET(
     let allAnswers: Array<{
       id: string;
       submissionId: string;
-      questionId: string;
+      questionId: string | null;
       answer: string;
       isCorrect: boolean | null;
       score: number | null;

@@ -6,6 +6,7 @@ import type {
   GeneratedActivity,
   RubricCriterion,
   CognitiveLevel,
+  CriterionScore,
 } from "@/types";
 
 // ---------------------------------------------------------------------------
@@ -552,6 +553,116 @@ Return ONLY valid JSON: { "score": <0|1|2>, "maxScore": 2, "feedback": "<1 sente
     // Graceful fallback — don't block submission if auto-grading fails
     return { score: 0, maxScore: 2, feedback: "Auto-grading unavailable. Please score manually." };
   }
+}
+
+// ===========================================================================
+//  Score Performance Task — AI criterion-level scoring (the WOW feature)
+// ===========================================================================
+
+/**
+ * scorePerformanceTask — Scores a student's performance task submission
+ * against each rubric criterion independently. Returns detailed reasoning
+ * for every criterion — this is the signature feature that shows AI-powered
+ * assessment with transparency and rigor.
+ */
+export async function scorePerformanceTask(
+  taskDescription: string,
+  scenario: string,
+  rubric: RubricCriterion[],
+  studentResponse: string,
+  submissionType: "text" | "file" | "link"
+): Promise<{ criterionScores: CriterionScore[] }> {
+  const rubricDetail = rubric
+    .map(
+      (c) =>
+        `Criterion: "${c.criterionName}" (${c.weight} points)\n` +
+        c.levels
+          .map((l) => `  - ${l.score} (${l.label}): ${l.description}`)
+          .join("\n")
+    )
+    .join("\n\n");
+
+  const submissionContext =
+    submissionType === "link"
+      ? "The student submitted a link to their work. Evaluate based on what they described or referenced."
+      : submissionType === "file"
+        ? "The student uploaded a file. The content has been extracted below."
+        : "The student wrote their response directly.";
+
+  const systemPrompt = `You are an expert assessment evaluator using criterion-referenced scoring. You evaluate student performance task submissions against specific rubric criteria with fairness, rigor, and transparency.
+
+Your scoring approach:
+- Score EACH criterion independently — a student can excel in one area and struggle in another
+- Provide SPECIFIC evidence from the student's work to justify each score
+- Be fair but rigorous — don't inflate scores, but acknowledge genuine effort and understanding
+- Use the exact rubric descriptors to determine the appropriate score level
+- If the response is off-topic, minimal, or doesn't address a criterion, score it as Beginning (1)
+
+${submissionContext}`;
+
+  const criterionNames = rubric.map((c) => `"${c.criterionName}"`).join(", ");
+
+  const userPrompt = `Score this student's performance task submission against each rubric criterion.
+
+TASK DESCRIPTION:
+${taskDescription}
+
+SCENARIO:
+${scenario}
+
+RUBRIC CRITERIA:
+${rubricDetail}
+
+STUDENT RESPONSE:
+${studentResponse}
+
+Score each criterion independently. Return a JSON object with this exact schema:
+{
+  "criterionScores": [
+    {
+      "criterionName": "string — must match one of: ${criterionNames}",
+      "score": number — 1 to 4,
+      "maxScore": 4,
+      "label": "string — Exemplary | Proficient | Developing | Beginning",
+      "reasoning": "string — 2-3 sentences explaining the score with specific evidence from the student's work"
+    }
+  ]
+}
+
+You must return exactly one score object for each criterion: ${criterionNames}.
+
+Return ONLY valid JSON.`;
+
+  return callClaude<{ criterionScores: CriterionScore[] }>({
+    systemPrompt,
+    userPrompt,
+    maxTokens: 2048,
+    temperature: 0.3,
+    validate: (parsed: unknown) => {
+      const data = parsed as { criterionScores?: unknown[] };
+      if (!Array.isArray(data.criterionScores) || data.criterionScores.length === 0) {
+        throw new Error("Expected criterionScores array");
+      }
+      for (const cs of data.criterionScores as CriterionScore[]) {
+        if (!cs.criterionName || !cs.score || !cs.label || !cs.reasoning) {
+          throw new Error("Criterion score missing required fields");
+        }
+        if (cs.score < 1 || cs.score > 4) {
+          throw new Error(`Invalid score ${cs.score} — must be 1-4`);
+        }
+      }
+      // Verify we got a score for each criterion
+      const scoredCriteria = new Set(
+        (data.criterionScores as CriterionScore[]).map((cs) => cs.criterionName)
+      );
+      for (const c of rubric) {
+        if (!scoredCriteria.has(c.criterionName)) {
+          throw new Error(`Missing score for criterion: ${c.criterionName}`);
+        }
+      }
+      return data as { criterionScores: CriterionScore[] };
+    },
+  });
 }
 
 // ===========================================================================

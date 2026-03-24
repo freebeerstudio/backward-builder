@@ -55,7 +55,7 @@ export async function GET(
     // Load all answers
     const submissionIds = submissions.map((s) => s.id);
     let allAnswers: Array<{
-      questionId: string;
+      questionId: string | null;
       isCorrect: boolean | null;
     }> = [];
 

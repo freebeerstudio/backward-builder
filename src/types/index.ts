@@ -29,6 +29,16 @@ export interface MCOption {
   isCorrect: boolean;
 }
 
+// --- Performance Task Scoring Types ---
+
+export interface CriterionScore {
+  criterionName: string;
+  score: number;      // 1-4
+  maxScore: number;   // 4
+  label: string;      // "Exemplary" | "Proficient" | "Developing" | "Beginning"
+  reasoning: string;  // 2-3 sentences explaining the score
+}
+
 // --- AI Response Types ---
 
 /** Response from analyzeUnderstanding() */

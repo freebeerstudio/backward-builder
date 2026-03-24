@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
@@ -13,6 +13,20 @@ import {
   type CheckData,
 } from "@/components/unit/CheckForUnderstandingCard";
 import type { CognitiveLevel, RubricCriterion } from "@/types";
+
+const TASK_LOADING_MESSAGES = [
+  "Analyzing your enduring understanding for transfer-level assessment...",
+  "Designing authentic GRASPS scenarios...",
+  "Building multi-criterion rubrics aligned to your standards...",
+  "Calibrating cognitive rigor to your Bloom's level...",
+];
+
+const CHECK_LOADING_MESSAGES = [
+  "Mapping formative questions to rubric criteria...",
+  "Creating diagnostic checks to measure student readiness...",
+  "Calibrating question difficulty for your grade level...",
+  "Aligning checks to performance task success criteria...",
+];
 
 interface TaskWithSelection extends PerformanceTaskData {
   isSelected: boolean;
@@ -46,6 +60,50 @@ function Stage2Client({
   const [generatingChecks, setGeneratingChecks] = useState(false);
   const [selectingTask, setSelectingTask] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Loading message rotation
+  const [taskMsgIndex, setTaskMsgIndex] = useState(0);
+  const [checkMsgIndex, setCheckMsgIndex] = useState(0);
+  const taskIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (generatingTasks) {
+      setTaskMsgIndex(0);
+      taskIntervalRef.current = setInterval(() => {
+        setTaskMsgIndex((prev) =>
+          prev < TASK_LOADING_MESSAGES.length - 1 ? prev + 1 : prev
+        );
+      }, 2500);
+    } else {
+      if (taskIntervalRef.current) {
+        clearInterval(taskIntervalRef.current);
+        taskIntervalRef.current = null;
+      }
+    }
+    return () => {
+      if (taskIntervalRef.current) clearInterval(taskIntervalRef.current);
+    };
+  }, [generatingTasks]);
+
+  useEffect(() => {
+    if (generatingChecks) {
+      setCheckMsgIndex(0);
+      checkIntervalRef.current = setInterval(() => {
+        setCheckMsgIndex((prev) =>
+          prev < CHECK_LOADING_MESSAGES.length - 1 ? prev + 1 : prev
+        );
+      }, 2500);
+    } else {
+      if (checkIntervalRef.current) {
+        clearInterval(checkIntervalRef.current);
+        checkIntervalRef.current = null;
+      }
+    }
+    return () => {
+      if (checkIntervalRef.current) clearInterval(checkIntervalRef.current);
+    };
+  }, [generatingChecks]);
 
   // -----------------------------------------------------------------------
   // Generate Performance Tasks
@@ -230,13 +288,13 @@ function Stage2Client({
           </div>
         )}
 
-        {/* Loading state */}
+        {/* Loading state — task generation */}
         {generatingTasks && (
           <div className="rounded-xl border border-border bg-card p-12 text-center">
-            <LoadingSpinner
-              size="lg"
-              message="Designing authentic performance tasks with rubrics..."
-            />
+            <LoadingSpinner size="lg" />
+            <p className="mt-4 font-body text-sm text-forest animate-pulse">
+              {TASK_LOADING_MESSAGES[taskMsgIndex]}
+            </p>
             <p className="mt-3 text-xs text-text-light">
               This may take 15-30 seconds
             </p>
@@ -327,13 +385,13 @@ function Stage2Client({
           </div>
         )}
 
-        {/* Loading state */}
+        {/* Loading state — check generation */}
         {generatingChecks && (
           <div className="rounded-xl border border-border bg-card p-12 text-center">
-            <LoadingSpinner
-              size="lg"
-              message="Creating formative checks aligned to the rubric..."
-            />
+            <LoadingSpinner size="lg" />
+            <p className="mt-4 font-body text-sm text-forest animate-pulse">
+              {CHECK_LOADING_MESSAGES[checkMsgIndex]}
+            </p>
             <p className="mt-3 text-xs text-text-light">
               This may take 10-20 seconds
             </p>

@@ -1,8 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+
+const PLAN_LOADING_MESSAGES = [
+  "Sequencing activities from foundational knowledge to transfer...",
+  "Aligning each activity to rubric criteria...",
+  "Placing formative checks at natural diagnostic points...",
+  "Building scaffolding toward your performance task...",
+];
 
 interface GeneratePlanButtonProps {
   unitId: string;
@@ -10,13 +17,35 @@ interface GeneratePlanButtonProps {
 
 /**
  * Client-side button that triggers the learning plan generation API.
- * Shows loading state while Claude generates the sequenced activities.
+ * Shows loading state with rotating pedagogical messages while Claude
+ * generates the sequenced activities.
  * On success, refreshes the page to show the new learning plan.
  */
 function GeneratePlanButton({ unitId }: GeneratePlanButtonProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [msgIndex, setMsgIndex] = useState(0);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (loading) {
+      setMsgIndex(0);
+      intervalRef.current = setInterval(() => {
+        setMsgIndex((prev) =>
+          prev < PLAN_LOADING_MESSAGES.length - 1 ? prev + 1 : prev
+        );
+      }, 3000);
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    }
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [loading]);
 
   async function handleGenerate() {
     setLoading(true);
@@ -56,10 +85,30 @@ function GeneratePlanButton({ unitId }: GeneratePlanButtonProps) {
       </Button>
 
       {loading && (
-        <p className="mt-3 font-body text-sm text-text-light">
-          Claude is designing a scaffolded learning sequence aligned to your
-          performance task. This takes about 15-20 seconds.
-        </p>
+        <div className="mt-4 flex items-center gap-3 rounded-lg border border-forest/20 bg-forest/5 px-4 py-3">
+          <svg
+            className="h-5 w-5 animate-spin text-forest shrink-0"
+            viewBox="0 0 24 24"
+            fill="none"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+            />
+          </svg>
+          <p className="font-body text-sm text-forest animate-pulse">
+            {PLAN_LOADING_MESSAGES[msgIndex]}
+          </p>
+        </div>
       )}
 
       {error && (

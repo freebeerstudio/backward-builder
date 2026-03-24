@@ -188,9 +188,13 @@ export const studentAnswers = pgTable("student_answers", {
   submissionId: uuid("submission_id")
     .notNull()
     .references(() => studentSubmissions.id, { onDelete: "cascade" }),
-  questionId: uuid("question_id").notNull(),
+  questionId: uuid("question_id"), // nullable — performance task criterion scores don't have a question
   answer: text("answer").notNull(),
   isCorrect: boolean("is_correct"),
   score: integer("score"),
   feedback: text("feedback"),
+  criterionName: varchar("criterion_name", { length: 255 }), // for performance task criterion scores
+  aiReasoning: text("ai_reasoning"), // AI's explanation for the score
+  teacherScore: integer("teacher_score"), // teacher override score (null = not yet reviewed)
+  teacherNotes: text("teacher_notes"), // optional teacher notes on the criterion
 });

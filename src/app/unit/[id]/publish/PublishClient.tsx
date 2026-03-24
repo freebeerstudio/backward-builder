@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { QRCodeDisplay } from "@/components/unit/QRCodeDisplay";
 
 interface AssessmentInfo {
   id: string;
@@ -207,13 +208,17 @@ function PublishClient({
             Performance Task
           </h3>
           {publishedTasks.map((task) => (
-            <ShareLinkCard
-              key={task.id}
-              item={task}
-              type="task"
-              copiedId={copiedId}
-              onCopy={copyToClipboard}
-            />
+            <div key={task.id} className="space-y-3">
+              <ShareLinkCard
+                item={task}
+                type="task"
+                copiedId={copiedId}
+                onCopy={copyToClipboard}
+              />
+              <div className="flex justify-center">
+                <QRCodeDisplay url={task.url} size={180} />
+              </div>
+            </div>
           ))}
         </div>
       )}
@@ -225,13 +230,17 @@ function PublishClient({
             Checks for Understanding
           </h3>
           {publishedChecks.map((check) => (
-            <ShareLinkCard
-              key={check.id}
-              item={check}
-              type="check"
-              copiedId={copiedId}
-              onCopy={copyToClipboard}
-            />
+            <div key={check.id} className="space-y-3">
+              <ShareLinkCard
+                item={check}
+                type="check"
+                copiedId={copiedId}
+                onCopy={copyToClipboard}
+              />
+              <div className="flex justify-center">
+                <QRCodeDisplay url={check.url} size={180} />
+              </div>
+            </div>
           ))}
         </div>
       )}

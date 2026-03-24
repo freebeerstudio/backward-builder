@@ -47,6 +47,12 @@ interface AnswerResult {
   feedback: string | null;
 }
 
+interface TaskSubmissionSummary {
+  total: number;
+  reviewed: number;
+  averagePercent: number;
+}
+
 interface ResultsData {
   unit: {
     id: string;
@@ -98,6 +104,10 @@ export default function ResultsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Performance task submissions
+  const [taskSummary, setTaskSummary] = useState<TaskSubmissionSummary | null>(null);
+  const [taskTitle, setTaskTitle] = useState<string | null>(null);
+
   // Reteach section
   const [reteachInsights, setReteachInsights] = useState<string | null>(null);
   const [reteachLoading, setReteachLoading] = useState(false);
@@ -122,6 +132,25 @@ export default function ResultsPage() {
     }
     loadResults();
   }, [unitId]);
+
+  // Fetch task submission summary after data loads
+  useEffect(() => {
+    if (!data) return;
+    async function loadTaskSubs() {
+      try {
+        const res = await fetch(`/api/unit/${unitId}/task-submissions`);
+        if (!res.ok) return;
+        const json = await res.json();
+        if (json.task) {
+          setTaskTitle(json.task.title);
+          setTaskSummary(json.summary);
+        }
+      } catch {
+        // Silently fail — not critical
+      }
+    }
+    loadTaskSubs();
+  }, [data, unitId]);
 
   // Fetch reteach insights after data loads
   useEffect(() => {
@@ -480,6 +509,82 @@ export default function ResultsPage() {
                   })}
                 </tbody>
               </table>
+            </div>
+          </section>
+        )}
+
+        {/* Performance Task Submissions */}
+        {taskSummary && (
+          <section className="mb-10">
+            <h2 className="mb-4 font-heading text-xl font-bold text-forest-dark">
+              Performance Task Submissions
+            </h2>
+            <div className="rounded-xl border border-border bg-card p-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="font-heading text-base font-semibold text-text">
+                    {taskTitle}
+                  </p>
+                  <div className="mt-2 flex flex-wrap items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-forest/10 font-heading text-sm font-bold text-forest">
+                        {taskSummary.total}
+                      </span>
+                      <span className="font-body text-sm text-text-light">
+                        total submissions
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`inline-flex h-8 w-8 items-center justify-center rounded-full font-heading text-sm font-bold ${
+                        taskSummary.reviewed === taskSummary.total && taskSummary.total > 0
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-yellow-100 text-yellow-700'
+                      }`}>
+                        {taskSummary.reviewed}
+                      </span>
+                      <span className="font-body text-sm text-text-light">
+                        reviewed
+                      </span>
+                    </div>
+                    {taskSummary.total > 0 && (
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 font-heading text-sm font-bold text-blue-700">
+                          {taskSummary.averagePercent}%
+                        </span>
+                        <span className="font-body text-sm text-text-light">
+                          avg AI score
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <Link
+                  href={`/unit/${unitId}/review`}
+                  className="inline-flex items-center gap-2 rounded-lg bg-forest px-5 py-2.5 font-heading text-sm font-bold text-white transition-colors hover:bg-forest-light"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                  </svg>
+                  Review Submissions
+                </Link>
+              </div>
+
+              {taskSummary.total > 0 && taskSummary.reviewed < taskSummary.total && (
+                <div className="mt-4 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-2.5">
+                  <p className="font-body text-sm text-yellow-700">
+                    {taskSummary.total - taskSummary.reviewed} submission{taskSummary.total - taskSummary.reviewed !== 1 ? 's' : ''} awaiting
+                    your review. AI has scored them — confirm or adjust each criterion.
+                  </p>
+                </div>
+              )}
+
+              {taskSummary.total > 0 && taskSummary.reviewed === taskSummary.total && (
+                <div className="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-2.5">
+                  <p className="font-body text-sm text-green-700">
+                    All submissions reviewed! Teacher scores have been finalized.
+                  </p>
+                </div>
+              )}
             </div>
           </section>
         )}
