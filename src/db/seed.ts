@@ -838,7 +838,7 @@ async function seed() {
   console.log("3. Creating Unit 1: Ecosystem Interdependence...");
 
   await sql`
-    INSERT INTO units (id, teacher_id, title, enduring_understanding, essential_questions, standard_codes, standard_descriptions, cognitive_level, cognitive_level_explanation, status)
+    INSERT INTO units (id, teacher_id, title, enduring_understanding, essential_questions, standard_codes, standard_descriptions, standard_urls, cognitive_level, cognitive_level_explanation, status)
     VALUES (
       ${UNIT_1_ID},
       ${TEACHER_ID},
@@ -853,6 +853,10 @@ async function seed() {
       ${JSON.stringify([
         "Construct an explanation that predicts patterns of interactions among organisms across multiple ecosystems.",
         "Construct an argument supported by empirical evidence that changes to physical or biological components of an ecosystem affect populations.",
+      ])}::jsonb,
+      ${JSON.stringify([
+        "https://www.nextgenscience.org/pe/ms-ls2-2-ecosystems-interactions-energy-and-dynamics",
+        "https://www.nextgenscience.org/pe/ms-ls2-4-ecosystems-interactions-energy-and-dynamics",
       ])}::jsonb,
       'analyze',
       'Students must analyze cause-and-effect relationships across multiple trophic levels — not just identify organisms, but predict system-level consequences.',
@@ -1120,7 +1124,7 @@ async function seed() {
   console.log("9. Creating Unit 2: Causes of the American Revolution...");
 
   await sql`
-    INSERT INTO units (id, teacher_id, title, enduring_understanding, essential_questions, standard_codes, standard_descriptions, cognitive_level, cognitive_level_explanation, status)
+    INSERT INTO units (id, teacher_id, title, enduring_understanding, essential_questions, standard_codes, standard_descriptions, standard_urls, cognitive_level, cognitive_level_explanation, status)
     VALUES (
       ${UNIT_2_ID},
       ${TEACHER_ID},
@@ -1135,6 +1139,10 @@ async function seed() {
       ${JSON.stringify([
         "Analyze the causes and consequences of a specific problem in history as well as the challenges and opportunities faced by those trying to address it.",
         "Develop a claim about a historical issue based on analysis of multiple sources representing a range of perspectives.",
+      ])}::jsonb,
+      ${JSON.stringify([
+        "https://dese.mo.gov/college-career-readiness/curriculum/missouri-learning-standards/social-studies",
+        "https://dese.mo.gov/college-career-readiness/curriculum/missouri-learning-standards/social-studies",
       ])}::jsonb,
       'analyze',
       'Students must analyze the interplay between multiple categories of causes (economic, political, ideological) and evaluate their relative significance — not just memorize a timeline of events.',
