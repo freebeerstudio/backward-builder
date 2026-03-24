@@ -35,7 +35,7 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
 
 const PAGE_SIZE = 8;
 /** Minimum units before showing the filter bar */
-const FILTER_THRESHOLD = 3;
+const FILTER_THRESHOLD = 2;
 
 type Tab = "my-units" | "shared" | "community";
 

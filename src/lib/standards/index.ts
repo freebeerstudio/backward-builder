@@ -32,10 +32,18 @@ const FRAMEWORKS: Record<string, StandardsFramework> = {
 /** Map subject names to local framework IDs for fallback */
 function getLocalFallbackFrameworkId(subject: string): string | null {
   const lower = subject.toLowerCase();
-  if (lower === "science") return "NGSS-MS";
-  if (lower === "ela" || lower === "language arts" || lower === "english") return "CCSS-ELA";
-  if (lower === "math" || lower === "mathematics") return "CCSS-Math";
-  if (lower === "social studies" || lower === "history") return "CCSS-ELA"; // RH strand
+  // Science family → NGSS
+  if (["science", "biology", "chemistry", "physics", "earth science", "environmental science"].includes(lower))
+    return "NGSS-MS";
+  // ELA → CCSS-ELA
+  if (["english language arts", "ela", "language arts", "english"].includes(lower))
+    return "CCSS-ELA";
+  // Math → CCSS-Math
+  if (["mathematics", "math"].includes(lower))
+    return "CCSS-Math";
+  // Social Studies family → CCSS-ELA (RH strand for reading history)
+  if (["history / social studies", "u.s. history", "world history", "civics / government", "economics", "geography"].includes(lower))
+    return "CCSS-ELA";
   return null;
 }
 

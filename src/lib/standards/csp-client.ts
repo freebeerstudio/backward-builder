@@ -82,8 +82,11 @@ interface CSPStandardSetFull {
 //  Grade normalization
 // ---------------------------------------------------------------------------
 
-/** Convert grade display string to CSP's 2-digit format */
+/** Convert grade display string to CSP's education level format */
 function normalizeGrade(grade: string): string {
+  const lower = grade.toLowerCase();
+  if (lower.includes("pre-k") || lower.includes("prek")) return "Pre-K";
+  if (lower.includes("kindergarten") || lower === "k") return "K";
   const num = grade.replace(/\D/g, "");
   if (!num) return grade;
   return num.padStart(2, "0");
@@ -93,23 +96,63 @@ function normalizeGrade(grade: string): string {
 //  Subject normalization
 // ---------------------------------------------------------------------------
 
-/** Map our subject names to CSP's normalizedSubject values */
+/**
+ * Map our subject names to CSP's subject/normalizedSubject values.
+ *
+ * Our app has 23 subjects. CSP has its own naming. This function
+ * bridges the two by matching on keywords and subject families.
+ */
 function matchesSubject(setSubject: string, normalizedSubject: string | undefined, targetSubject: string): boolean {
   const target = targetSubject.toLowerCase();
   const setLower = (setSubject || "").toLowerCase();
   const normLower = (normalizedSubject || "").toLowerCase();
 
-  // Direct matches
+  // Direct matches (covers CSP's own naming)
   if (normLower === target) return true;
   if (setLower === target) return true;
 
-  // Common mappings
-  if (target === "science" && (normLower === "science" || setLower.includes("science"))) return true;
-  if (target === "math" && (normLower === "math" || setLower.includes("math"))) return true;
-  if ((target === "ela" || target === "language arts" || target === "english") &&
+  // --- Science family ---
+  const scienceSubjects = ["science", "biology", "chemistry", "physics", "earth science", "environmental science"];
+  const isActualScience = (normLower === "science" || setLower.includes("science")) && !setLower.includes("computer science");
+  if (scienceSubjects.includes(target) && isActualScience) return true;
+  // Specific science → look for that keyword in the CSP set title
+  if (target === "biology" && setLower.includes("biology")) return true;
+  if (target === "chemistry" && setLower.includes("chemistry")) return true;
+  if (target === "physics" && setLower.includes("physics")) return true;
+  if (target === "earth science" && (setLower.includes("earth") || setLower.includes("geology"))) return true;
+  if (target === "environmental science" && setLower.includes("environ")) return true;
+
+  // --- Math family ---
+  if ((target === "mathematics" || target === "math") &&
+      (normLower === "math" || setLower.includes("math"))) return true;
+
+  // --- ELA family ---
+  if ((target === "english language arts" || target === "ela" || target === "language arts" || target === "english") &&
       (normLower === "ela" || setLower.includes("english") || setLower.includes("language arts") || setLower.includes("ela"))) return true;
-  if ((target === "social studies" || target === "history") &&
+
+  // --- Social Studies family ---
+  const ssSubjects = ["history / social studies", "social studies", "history", "u.s. history", "world history",
+                      "civics / government", "economics", "geography"];
+  if (ssSubjects.includes(target) &&
       (setLower.includes("social studies") || setLower.includes("history"))) return true;
+  // Specific SS subjects
+  if (target === "civics / government" && (setLower.includes("government") || setLower.includes("civic"))) return true;
+  if (target === "economics" && setLower.includes("econom")) return true;
+  if (target === "geography" && setLower.includes("geograph")) return true;
+  if (target === "u.s. history" && (setLower.includes("american history") || setLower.includes("u.s. history") || setLower.includes("us history"))) return true;
+  if (target === "world history" && (setLower.includes("world history") || setLower.includes("ancient"))) return true;
+
+  // --- Arts family ---
+  if (target === "art" && (setLower.includes("visual art") || setLower.includes("fine art"))) return true;
+  if (target === "music" && setLower.includes("music")) return true;
+  if ((target === "theater / drama" || target === "theater") && (setLower.includes("theater") || setLower.includes("theatre") || setLower.includes("drama"))) return true;
+
+  // --- Other ---
+  if ((target === "physical education / health" || target === "health") &&
+      (setLower.includes("physical education") || setLower.includes("health"))) return true;
+  if (target === "computer science" && setLower.includes("computer")) return true;
+  if (target === "world languages" && (setLower.includes("world language") || setLower.includes("foreign language"))) return true;
+  if (target === "career & technical education" && (setLower.includes("cte") || setLower.includes("career") || setLower.includes("technical"))) return true;
 
   return false;
 }
