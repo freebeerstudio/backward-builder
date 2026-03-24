@@ -157,7 +157,10 @@ export default function Home() {
             — &quot;Vibe the Gap&quot; Challenge
           </p>
           <p className="mt-1">
-            Powered by Claude AI &middot; Next.js &middot; Vercel
+            <a href="https://backwardbuilder.com" className="hover:text-forest transition-colors">
+              BackwardBuilder.com
+            </a>
+            {" "}&middot; Powered by Claude AI &middot; Next.js &middot; Vercel
           </p>
         </div>
       </footer>

@@ -9,7 +9,7 @@ import { QuestionList } from '@/components/assessment/QuestionList';
 import type { Question } from '@/types';
 
 export const metadata = {
-  title: 'Edit Assessment — Backward Builder',
+  title: 'Edit Assessment',
   description: 'Review and edit your generated assessment questions.',
 };
 

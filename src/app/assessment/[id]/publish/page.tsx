@@ -10,7 +10,7 @@ import { PublishButton } from './PublishButton';
 import { ShareLinkDisplay } from './ShareLinkDisplay';
 
 export const metadata = {
-  title: 'Publish Assessment — Backward Builder',
+  title: 'Publish Assessment',
   description: 'Publish your assessment and share it with students.',
 };
 

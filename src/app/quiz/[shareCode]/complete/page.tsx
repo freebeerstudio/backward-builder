@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Assessment Submitted — Backward Builder",
+  title: "Assessment Submitted",
 };
 
 /**

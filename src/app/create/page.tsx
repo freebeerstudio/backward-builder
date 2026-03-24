@@ -1,7 +1,7 @@
 import { ConversationForm } from "@/components/assessment/ConversationForm";
 
 export const metadata = {
-  title: "Create Your Assessment — Backward Builder",
+  title: "Create Your Assessment",
   description: "Build a standards-aligned assessment through a guided conversation.",
 };
 
