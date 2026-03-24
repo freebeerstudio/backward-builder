@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { AuthModal } from "@/components/auth/AuthModal";
 
 const GRADES = [
   "5th Grade", "6th Grade", "7th Grade", "8th Grade",
@@ -74,8 +75,13 @@ const TEMPLATES = [
 
 /**
  * HeroChatBox — the central input where teachers begin building a unit.
- * Styled like a Lovable-style input card but with an academic aesthetic.
- * Contains grade/subject/state selectors and a textarea for the enduring understanding.
+ *
+ * Flow:
+ * 1. User fills in understanding + grade/subject/state
+ * 2. Clicks "Start Planning"
+ * 3. If NOT authenticated → auth modal appears (page behind blurs)
+ * 4. After auth → continues with unit creation seamlessly
+ * 5. If already authenticated → skips modal, goes straight to AI
  */
 export function HeroChatBox() {
   const router = useRouter();
@@ -87,6 +93,18 @@ export function HeroChatBox() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState("");
   const [error, setError] = useState("");
+
+  /* Auth modal state */
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
+  /* Check auth status on mount (non-blocking) */
+  useEffect(() => {
+    fetch("/api/auth/check")
+      .then((r) => r.json())
+      .then((data) => setIsAuthenticated(data.authenticated))
+      .catch(() => setIsAuthenticated(false));
+  }, []);
 
   /* Rotate loading messages while AI processes */
   useEffect(() => {
@@ -112,21 +130,11 @@ export function HeroChatBox() {
     setSubject(t.subject);
     setState(t.state);
     setUnderstanding(t.understanding);
-    // Focus the textarea so user sees it's filled
     setTimeout(() => textareaRef.current?.focus(), 100);
   }
 
-  /** Submit: save context → create unit → navigate */
-  async function handleSubmit() {
-    if (!grade || !subject || !state) {
-      setError("Please select a grade level, subject, and state.");
-      return;
-    }
-    if (!understanding.trim()) {
-      setError("Describe what students should understand.");
-      return;
-    }
-
+  /** The actual unit creation flow (called after auth is confirmed) */
+  async function createUnit() {
     setError("");
     setIsLoading(true);
 
@@ -158,143 +166,198 @@ export function HeroChatBox() {
     }
   }
 
+  /** Submit handler — checks auth first */
+  async function handleSubmit() {
+    if (!grade || !subject || !state) {
+      setError("Please select a grade level, subject, and state.");
+      return;
+    }
+    if (!understanding.trim()) {
+      setError("Describe what students should understand.");
+      return;
+    }
+
+    // If we haven't checked auth yet, check now
+    if (isAuthenticated === null) {
+      try {
+        const res = await fetch("/api/auth/check");
+        const data = await res.json();
+        setIsAuthenticated(data.authenticated);
+        if (!data.authenticated) {
+          setShowAuthModal(true);
+          return;
+        }
+      } catch {
+        // Can't check — try to proceed, server will handle it
+      }
+    } else if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
+
+    // Authenticated — proceed with unit creation
+    createUnit();
+  }
+
+  /** Called when auth modal succeeds */
+  function handleAuthSuccess() {
+    setShowAuthModal(false);
+    setIsAuthenticated(true);
+    // Continue with unit creation
+    createUnit();
+  }
+
   const canSubmit = grade && subject && state && understanding.trim() && !isLoading;
 
   return (
-    <div className="w-full">
-      {/* --- The Chat Box --- */}
-      <div
-        className="animate-hero-box mx-auto w-full max-w-3xl rounded-2xl border border-ruled bg-paper shadow-[0_2px_24px_rgba(27,42,74,0.08),0_0_0_1px_rgba(27,42,74,0.03)]"
-        role="form"
-        aria-label="Unit plan builder"
-      >
-        {/* Textarea */}
-        <div className="p-4 pb-2 sm:p-5 sm:pb-3">
-          <textarea
-            ref={textareaRef}
-            value={understanding}
-            onChange={(e) => setUnderstanding(e.target.value)}
-            placeholder="What should students understand by the end of this unit?"
-            rows={3}
-            disabled={isLoading}
-            aria-label="Enduring understanding"
-            className="w-full resize-none bg-transparent font-ui text-[15px] leading-relaxed text-graphite placeholder:text-pencil/60 focus:outline-none disabled:opacity-50 sm:text-base"
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey && canSubmit) {
-                e.preventDefault();
-                handleSubmit();
-              }
-            }}
-          />
-        </div>
-
-        {/* Divider */}
-        <div className="mx-4 border-t border-ruled/60 sm:mx-5" />
-
-        {/* Bottom bar: dropdowns + submit */}
-        <div className="flex flex-wrap items-center gap-2 p-3 sm:gap-3 sm:p-4">
-          {/* Grade selector */}
-          <select
-            value={grade}
-            onChange={(e) => setGrade(e.target.value)}
-            disabled={isLoading}
-            aria-label="Grade level"
-            className="focus-ring h-9 rounded-lg border border-ruled bg-cream px-3 font-ui text-xs font-medium text-graphite transition hover:border-ink-muted focus:border-ink sm:text-sm"
-          >
-            <option value="">Grade</option>
-            {GRADES.map((g) => (
-              <option key={g} value={g}>{g}</option>
-            ))}
-          </select>
-
-          {/* Subject selector */}
-          <select
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            disabled={isLoading}
-            aria-label="Subject area"
-            className="focus-ring h-9 rounded-lg border border-ruled bg-cream px-3 font-ui text-xs font-medium text-graphite transition hover:border-ink-muted focus:border-ink sm:text-sm"
-          >
-            <option value="">Subject</option>
-            {SUBJECTS.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-
-          {/* State selector */}
-          <select
-            value={state}
-            onChange={(e) => setState(e.target.value)}
-            disabled={isLoading}
-            aria-label="State standards"
-            className="focus-ring h-9 rounded-lg border border-ruled bg-cream px-3 font-ui text-xs font-medium text-graphite transition hover:border-ink-muted focus:border-ink sm:text-sm"
-          >
-            <option value="">State</option>
-            {STATES.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-
-          {/* Spacer */}
-          <div className="flex-1" />
-
-          {/* Submit button */}
-          <button
-            onClick={handleSubmit}
-            disabled={!canSubmit}
-            aria-label="Start planning"
-            className="focus-ring inline-flex h-9 items-center gap-1.5 rounded-lg bg-ink px-4 font-ui text-sm font-semibold text-white shadow-sm transition-all hover:bg-ink-light disabled:cursor-not-allowed disabled:opacity-40 sm:px-5"
-          >
-            {isLoading ? (
-              <>
-                <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                <span className="hidden sm:inline">Planning…</span>
-              </>
-            ) : (
-              <>
-                Start Planning
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                </svg>
-              </>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Loading message */}
-      {isLoading && (
-        <p className="mt-4 text-center font-ui text-sm text-pencil animate-hero-subtitle" role="status" aria-live="polite">
-          {loadingMsg}
-        </p>
+    <>
+      {/* Blur overlay when auth modal is showing */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-[90] bg-ink/20 backdrop-blur-sm" aria-hidden="true" />
       )}
 
-      {/* Error message */}
-      {error && (
-        <p className="mt-3 text-center font-ui text-sm text-error" role="alert">
-          {error}
-        </p>
-      )}
+      {/* Auth modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onSuccess={handleAuthSuccess}
+        onClose={() => setShowAuthModal(false)}
+      />
 
-      {/* --- Quick-Start Pill Buttons --- */}
-      <div className="animate-hero-pills mt-6 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-        {TEMPLATES.map((t) => (
-          <button
-            key={t.label}
-            onClick={() => applyTemplate(t)}
-            disabled={isLoading}
-            className="focus-ring group inline-flex items-center gap-1.5 rounded-full border border-ruled bg-paper px-3.5 py-2 font-ui text-xs font-medium text-pencil shadow-sm transition-all hover:border-ink-muted hover:bg-cream hover:text-graphite hover:shadow-md disabled:opacity-40 sm:px-4 sm:text-sm"
-          >
-            <span className="text-base transition-transform group-hover:scale-110" role="img" aria-hidden="true">
-              {t.icon}
-            </span>
-            <span>{t.label}</span>
-          </button>
-        ))}
+      <div className="w-full">
+        {/* --- The Chat Box --- */}
+        <div
+          className="animate-hero-box mx-auto w-full max-w-3xl rounded-2xl border border-ruled bg-paper shadow-[0_2px_24px_rgba(27,42,74,0.08),0_0_0_1px_rgba(27,42,74,0.03)]"
+          role="form"
+          aria-label="Unit plan builder"
+        >
+          {/* Textarea */}
+          <div className="p-4 pb-2 sm:p-5 sm:pb-3">
+            <textarea
+              ref={textareaRef}
+              value={understanding}
+              onChange={(e) => setUnderstanding(e.target.value)}
+              placeholder="What should students understand by the end of this unit?"
+              rows={3}
+              disabled={isLoading}
+              aria-label="Enduring understanding"
+              className="w-full resize-none bg-transparent font-ui text-[15px] leading-relaxed text-graphite placeholder:text-pencil/60 focus:outline-none disabled:opacity-50 sm:text-base"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey && canSubmit) {
+                  e.preventDefault();
+                  handleSubmit();
+                }
+              }}
+            />
+          </div>
+
+          {/* Divider */}
+          <div className="mx-4 border-t border-ruled/60 sm:mx-5" />
+
+          {/* Bottom bar: dropdowns + submit */}
+          <div className="flex flex-wrap items-center gap-2 p-3 sm:gap-3 sm:p-4">
+            {/* Grade selector */}
+            <select
+              value={grade}
+              onChange={(e) => setGrade(e.target.value)}
+              disabled={isLoading}
+              aria-label="Grade level"
+              className="focus-ring h-9 rounded-lg border border-ruled bg-cream px-3 font-ui text-xs font-medium text-graphite transition hover:border-ink-muted focus:border-ink sm:text-sm"
+            >
+              <option value="">Grade</option>
+              {GRADES.map((g) => (
+                <option key={g} value={g}>{g}</option>
+              ))}
+            </select>
+
+            {/* Subject selector */}
+            <select
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              disabled={isLoading}
+              aria-label="Subject area"
+              className="focus-ring h-9 rounded-lg border border-ruled bg-cream px-3 font-ui text-xs font-medium text-graphite transition hover:border-ink-muted focus:border-ink sm:text-sm"
+            >
+              <option value="">Subject</option>
+              {SUBJECTS.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+
+            {/* State selector */}
+            <select
+              value={state}
+              onChange={(e) => setState(e.target.value)}
+              disabled={isLoading}
+              aria-label="State standards"
+              className="focus-ring h-9 rounded-lg border border-ruled bg-cream px-3 font-ui text-xs font-medium text-graphite transition hover:border-ink-muted focus:border-ink sm:text-sm"
+            >
+              <option value="">State</option>
+              {STATES.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+
+            {/* Spacer */}
+            <div className="flex-1" />
+
+            {/* Submit button */}
+            <button
+              onClick={handleSubmit}
+              disabled={!canSubmit}
+              aria-label="Start planning"
+              className="focus-ring inline-flex h-9 items-center gap-1.5 rounded-lg bg-ink px-4 font-ui text-sm font-semibold text-white shadow-sm transition-all hover:bg-ink-light disabled:cursor-not-allowed disabled:opacity-40 sm:px-5"
+            >
+              {isLoading ? (
+                <>
+                  <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  <span className="hidden sm:inline">Planning…</span>
+                </>
+              ) : (
+                <>
+                  Start Planning
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                  </svg>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Loading message */}
+        {isLoading && (
+          <p className="mt-4 text-center font-ui text-sm text-pencil animate-hero-subtitle" role="status" aria-live="polite">
+            {loadingMsg}
+          </p>
+        )}
+
+        {/* Error message */}
+        {error && (
+          <p className="mt-3 text-center font-ui text-sm text-error" role="alert">
+            {error}
+          </p>
+        )}
+
+        {/* --- Quick-Start Pill Buttons --- */}
+        <div className="animate-hero-pills mt-6 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+          {TEMPLATES.map((t) => (
+            <button
+              key={t.label}
+              onClick={() => applyTemplate(t)}
+              disabled={isLoading}
+              className="focus-ring group inline-flex items-center gap-1.5 rounded-full border border-ruled bg-paper px-3.5 py-2 font-ui text-xs font-medium text-pencil shadow-sm transition-all hover:border-ink-muted hover:bg-cream hover:text-graphite hover:shadow-md disabled:opacity-40 sm:px-4 sm:text-sm"
+            >
+              <span className="text-base transition-transform group-hover:scale-110" role="img" aria-hidden="true">
+                {t.icon}
+              </span>
+              <span>{t.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

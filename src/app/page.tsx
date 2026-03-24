@@ -5,6 +5,7 @@ import { teachers, units } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { HeroChatBox } from "@/components/landing/HeroChatBox";
 import { UnitTabs, type UnitCardData } from "@/components/landing/UnitTabs";
+import { LandingHeader } from "@/components/landing/LandingHeader";
 import { ButterflyLogo } from "@/components/ui/ButterflyLogo";
 
 /**
@@ -113,51 +114,11 @@ export default async function Home() {
   return (
     <div className="min-h-screen bg-cream font-ui">
       {/* ===================== HEADER ===================== */}
-      <header className="sticky top-0 z-50 border-b border-ruled/60 bg-paper/80 backdrop-blur-md">
-        <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3.5 sm:px-6">
-          <Link href="/" className="focus-ring flex items-center gap-2" aria-label="Backward Builder home">
-            <ButterflyLogo size={28} className="text-graphite" />
-            <span className="font-display text-xl text-ink sm:text-2xl">Backward Builder</span>
-          </Link>
-
-          {isAuthenticated ? (
-            /* Authenticated header: teacher name + avatar */
-            <div className="flex items-center gap-3">
-              <span className="hidden font-ui text-sm text-pencil sm:inline">
-                {teacherName}
-              </span>
-              <div
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-ink text-xs font-bold text-white"
-                aria-label={`Signed in as ${teacherName}`}
-              >
-                {teacherInitial}
-              </div>
-            </div>
-          ) : (
-            /* Unauthenticated header: demo + sign in/up */
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Link
-                href="/api/demo"
-                className="focus-ring hidden rounded-lg px-3.5 py-2 font-ui text-sm font-medium text-pencil transition hover:bg-chalk hover:text-graphite sm:inline-flex"
-              >
-                Try Demo
-              </Link>
-              <Link
-                href="/api/demo"
-                className="focus-ring rounded-lg px-3.5 py-2 font-ui text-sm font-medium text-pencil transition hover:bg-chalk hover:text-graphite"
-              >
-                Sign in
-              </Link>
-              <Link
-                href="/api/demo"
-                className="focus-ring rounded-lg bg-ink px-4 py-2 font-ui text-sm font-semibold text-white shadow-sm transition hover:bg-ink-light"
-              >
-                Sign up
-              </Link>
-            </div>
-          )}
-        </nav>
-      </header>
+      <LandingHeader
+        isAuthenticated={isAuthenticated}
+        teacherName={teacherName}
+        teacherInitial={teacherInitial}
+      />
 
       {/* ===================== HERO ===================== */}
       <section className="hero-gradient dot-grid relative overflow-hidden px-4 pb-12 pt-16 sm:px-6 sm:pb-16 sm:pt-24">
