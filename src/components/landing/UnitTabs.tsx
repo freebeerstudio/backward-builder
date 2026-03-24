@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 /** Shape for a unit card — works for both DB units and mock community units */
@@ -38,6 +38,9 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   complete: { label: "Complete", color: "var(--color-subj-science)" },
 };
 
+/** How many units to show per "page" before requiring Show More */
+const PAGE_SIZE = 8;
+
 type Tab = "my-units" | "shared" | "community";
 
 /**
@@ -45,7 +48,9 @@ type Tab = "my-units" | "shared" | "community";
  *
  * Unauthenticated: Shows "From the Community" with a flat card grid.
  * Authenticated: Shows tabs for "My Units" / "Shared with Me" / "Community"
- * with the teacher's actual units from the database.
+ *
+ * Progressive reveal: shows 8 cards at a time. "Show More" reveals the next 8.
+ * Buttons are hidden when all cards are visible or total <= 8.
  */
 export function UnitTabs({
   isAuthenticated,
@@ -54,6 +59,12 @@ export function UnitTabs({
   communityUnits,
 }: UnitTabsProps) {
   const [activeTab, setActiveTab] = useState<Tab>("my-units");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  /* Reset visible count when switching tabs */
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [activeTab]);
 
   const tabs: { key: Tab; label: string; count: number }[] = [
     { key: "my-units", label: "My Units", count: myUnits.length },
@@ -62,13 +73,16 @@ export function UnitTabs({
   ];
 
   /* Unauthenticated users always see community units regardless of tab state */
-  const activeUnits = !isAuthenticated
+  const allUnits = !isAuthenticated
     ? communityUnits
     : activeTab === "my-units"
       ? myUnits
       : activeTab === "shared"
         ? sharedUnits
         : communityUnits;
+
+  const visibleUnits = allUnits.slice(0, visibleCount);
+  const hasMore = allUnits.length > visibleCount;
 
   return (
     <section className="border-t border-ruled bg-paper px-4 py-14 sm:px-6 sm:py-20">
@@ -114,9 +128,6 @@ export function UnitTabs({
             <h2 className="font-display text-2xl text-ink sm:text-3xl">
               From the Community
             </h2>
-            <span className="font-ui text-sm font-medium text-ink-muted">
-              View All
-            </span>
           </div>
         )}
 
@@ -127,18 +138,20 @@ export function UnitTabs({
           aria-label={isAuthenticated ? tabs.find((t) => t.key === activeTab)?.label : undefined}
           className="mt-8 grid gap-4 sm:mt-10 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4"
         >
-          {activeUnits.length === 0 ? (
+          {visibleUnits.length === 0 ? (
             <div className="col-span-full py-12 text-center">
               <p className="font-ui text-sm text-pencil">
-                {activeTab === "my-units"
-                  ? "You haven't created any units yet. Use the builder above to get started!"
-                  : activeTab === "shared"
-                    ? "No units have been shared with you yet."
-                    : "No community units available."}
+                {!isAuthenticated
+                  ? "No community units available yet."
+                  : activeTab === "my-units"
+                    ? "You haven't created any units yet. Use the builder above to get started!"
+                    : activeTab === "shared"
+                      ? "No units have been shared with you yet."
+                      : "No community units available."}
               </p>
             </div>
           ) : (
-            activeUnits.map((unit, i) => (
+            visibleUnits.map((unit, i) => (
               <Link
                 key={unit.id}
                 href={unit.href}
@@ -201,15 +214,17 @@ export function UnitTabs({
           )}
         </div>
 
-        {/* Show More (community tab only) */}
-        {((isAuthenticated && activeTab === "community") || !isAuthenticated) &&
-          activeUnits.length > 0 && (
-            <div className="mt-8 text-center sm:mt-10">
-              <button className="focus-ring rounded-full border border-ruled px-6 py-2.5 font-ui text-sm font-medium text-pencil transition hover:border-ink-muted hover:bg-chalk hover:text-graphite">
-                Show More
-              </button>
-            </div>
-          )}
+        {/* Show More — only when there are hidden units */}
+        {hasMore && (
+          <div className="mt-8 text-center sm:mt-10">
+            <button
+              onClick={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
+              className="focus-ring rounded-full border border-ruled px-6 py-2.5 font-ui text-sm font-medium text-pencil transition hover:border-ink-muted hover:bg-chalk hover:text-graphite"
+            >
+              Show More ({allUnits.length - visibleCount} remaining)
+            </button>
+          </div>
+        )}
       </div>
     </section>
   );
