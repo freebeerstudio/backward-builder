@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 import { db } from "@/db";
 import { teachers } from "@/db/schema";
 import { resolveStandardUrls } from "@/lib/standards-urls";
@@ -69,10 +70,22 @@ export default async function UnitPage({ params }: UnitPageProps) {
 
   // Fetch teacher for state/subject context (needed for standards URL resolution)
   const [teacher] = await db
-    .select({ state: teachers.state, subject: teachers.subject })
+    .select({
+      id: teachers.id,
+      sessionId: teachers.sessionId,
+      displayName: teachers.displayName,
+      state: teachers.state,
+      subject: teachers.subject,
+    })
     .from(teachers)
     .where(eq(teachers.id, unit.teacherId))
     .limit(1);
+
+  // Determine if current visitor owns this unit
+  const cookieStore = await cookies();
+  const visitorSessionId = cookieStore.get("teacher_session")?.value;
+  const isOwner = !!(visitorSessionId && teacher?.sessionId === visitorSessionId);
+  const isAuthenticated = !!visitorSessionId;
 
   const hasTasks = tasks.length > 0;
   const hasChecks = checks.length > 0;
@@ -128,6 +141,9 @@ export default async function UnitPage({ params }: UnitPageProps) {
             hasTasks={hasTasks}
             hasChecks={hasChecks}
             hasActivities={hasActivities}
+            isOwner={isOwner}
+            isAuthenticated={isAuthenticated}
+            authorName={teacher?.displayName || "Teacher"}
           />
         </div>
       </main>

@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { AuthModal } from "@/components/auth/AuthModal";
 import type { CognitiveLevel } from "@/types";
 
 interface UnitData {
@@ -23,6 +25,12 @@ interface UnitOverviewProps {
   hasTasks: boolean;
   hasChecks: boolean;
   hasActivities: boolean;
+  /** Whether the current visitor owns this unit */
+  isOwner?: boolean;
+  /** Whether the current visitor is authenticated at all */
+  isAuthenticated?: boolean;
+  /** Display name of the unit author */
+  authorName?: string;
 }
 
 const COGNITIVE_LEVEL_LABELS: Record<CognitiveLevel, string> = {
@@ -89,11 +97,69 @@ function StageCircle({
  * Academic editorial design: ink navy headers, paper-white cards with
  * ruled borders, serif display font for the title, clean typography.
  */
-function UnitOverview({ unit, hasTasks, hasChecks, hasActivities }: UnitOverviewProps) {
+function UnitOverview({ unit, hasTasks, hasChecks, hasActivities, isOwner = true, isAuthenticated = true, authorName }: UnitOverviewProps) {
   const router = useRouter();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  /**
+   * Guard for edit actions. If the user isn't the owner (or isn't even
+   * authenticated), show the auth modal instead of navigating.
+   */
+  function guardedAction(action: () => void) {
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
+    if (!isOwner) {
+      // Authenticated but not the owner — could copy/remix in future.
+      // For now, show a message or the auth modal.
+      setShowAuthModal(true);
+      return;
+    }
+    action();
+  }
 
   return (
+    <>
+    {/* Auth modal for non-owners / unauthenticated visitors */}
+    {showAuthModal && (
+      <div className="fixed inset-0 z-[90] bg-ink/20 backdrop-blur-sm" aria-hidden="true" />
+    )}
+    <AuthModal
+      isOpen={showAuthModal}
+      onSuccess={() => {
+        setShowAuthModal(false);
+        // Reload to re-render with authenticated state
+        window.location.reload();
+      }}
+      onClose={() => setShowAuthModal(false)}
+    />
+
     <div className="space-y-6">
+      {/* Community unit banner for visitors */}
+      {!isOwner && (
+        <div className="rounded-xl border border-ruled bg-chalk/50 px-5 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="font-ui text-sm font-medium text-graphite">
+                {authorName ? `Shared by ${authorName}` : "Community Unit"}
+              </p>
+              <p className="font-ui text-xs text-pencil mt-0.5">
+                {isAuthenticated
+                  ? "You're viewing a shared unit. Copy it to your account to customize."
+                  : "Sign up to create your own units or remix this one."}
+              </p>
+            </div>
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className="focus-ring rounded-lg bg-ink px-4 py-2 font-ui text-sm font-semibold text-white shadow-sm transition hover:bg-ink-light"
+            >
+              {isAuthenticated ? "Copy to My Units" : "Sign Up to Remix"}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ---- Unit Header ---- */}
       <div>
         <div className="flex flex-wrap items-center gap-3 mb-2">
@@ -224,9 +290,9 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities }: UnitOverview
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => router.push(`/unit/${unit.id}/stage2`)}
+                onClick={() => guardedAction(() => router.push(`/unit/${unit.id}/stage2`))}
               >
-                View &amp; Edit Stage 2
+                {isOwner ? "View & Edit Stage 2" : "View Stage 2"}
               </Button>
             </div>
           </div>
@@ -236,13 +302,15 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities }: UnitOverview
               Generate performance tasks and formative checks that measure whether
               students have achieved the desired results.
             </p>
-            <Button
-              variant="primary"
-              size="md"
-              onClick={() => router.push(`/unit/${unit.id}/stage2`)}
-            >
-              Generate Evidence
-            </Button>
+            {isOwner && (
+              <Button
+                variant="primary"
+                size="md"
+                onClick={() => router.push(`/unit/${unit.id}/stage2`)}
+              >
+                Generate Evidence
+              </Button>
+            )}
           </div>
         )}
       </Card>
@@ -266,9 +334,9 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities }: UnitOverview
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => router.push(`/unit/${unit.id}/stage3`)}
+                onClick={() => guardedAction(() => router.push(`/unit/${unit.id}/stage3`))}
               >
-                View &amp; Edit Stage 3
+                {isOwner ? "View & Edit Stage 3" : "View Stage 3"}
               </Button>
             </div>
           </div>
@@ -279,14 +347,16 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities }: UnitOverview
               the performance task — planned last because every activity serves the
               assessments.
             </p>
-            <Button
-              variant="primary"
-              size="md"
-              disabled={!hasTasks || !hasChecks}
-              onClick={() => router.push(`/unit/${unit.id}/stage3`)}
-            >
-              Generate Learning Plan
-            </Button>
+            {isOwner && (
+              <Button
+                variant="primary"
+                size="md"
+                disabled={!hasTasks || !hasChecks}
+                onClick={() => router.push(`/unit/${unit.id}/stage3`)}
+              >
+                Generate Learning Plan
+              </Button>
+            )}
             {(!hasTasks || !hasChecks) && (
               <p className="font-ui text-xs text-pencil mt-2">
                 Complete Stage 2 first — in backward design, activities are planned after assessments.
@@ -296,6 +366,7 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities }: UnitOverview
         )}
       </Card>
     </div>
+    </>
   );
 }
 
