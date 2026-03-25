@@ -116,6 +116,17 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities, isOwner = true
   const [shareLoading, setShareLoading] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
 
+  /* ---- Direct email share state ---- */
+  const [shareEmail, setShareEmail] = useState("");
+  const [emailShareLoading, setEmailShareLoading] = useState(false);
+  const [emailShareError, setEmailShareError] = useState<string | null>(null);
+  const [emailShareSuccess, setEmailShareSuccess] = useState<string | null>(null);
+  const [sharedWith, setSharedWith] = useState<
+    { shareId: string; email: string; displayName: string | null; sharedAt: string }[]
+  >([]);
+  const [sharesLoading, setSharesLoading] = useState(false);
+  const [removeShareLoading, setRemoveShareLoading] = useState<string | null>(null);
+
   /* ---- Community publish state ---- */
   const [isPublic, setIsPublic] = useState(unit.isPublic);
   const [publishLoading, setPublishLoading] = useState(false);
@@ -185,19 +196,99 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities, isOwner = true
     }
   }
 
-  /** Generate a share link for this unit */
-  async function handleShare() {
+  /** Open the share modal — loads existing shares and generates link */
+  async function openShareModal() {
+    setShowShareModal(true);
+    setEmailShareError(null);
+    setEmailShareSuccess(null);
+    setShareEmail("");
+
+    // Load existing shares and link in parallel
+    fetchSharedWith();
+    fetchShareLink();
+  }
+
+  /** Fetch the list of teachers this unit is shared with */
+  async function fetchSharedWith() {
+    setSharesLoading(true);
+    try {
+      const res = await fetch(`/api/unit/${unit.id}/share`);
+      if (!res.ok) throw new Error("Failed to load shares");
+      const data = await res.json();
+      setSharedWith(data.shares || []);
+    } catch (err) {
+      console.error("Failed to load shares:", err);
+    } finally {
+      setSharesLoading(false);
+    }
+  }
+
+  /** Generate or fetch the share link */
+  async function fetchShareLink() {
     setShareLoading(true);
     try {
       const res = await fetch(`/api/unit/${unit.id}/share`, { method: "POST" });
       if (!res.ok) throw new Error("Failed to generate share link");
       const data = await res.json();
       setShareUrl(data.shareUrl);
-      setShowShareModal(true);
     } catch (err) {
-      console.error("Share failed:", err);
+      console.error("Share link failed:", err);
     } finally {
       setShareLoading(false);
+    }
+  }
+
+  /** Share directly by email */
+  async function handleEmailShare(e: React.FormEvent) {
+    e.preventDefault();
+    if (!shareEmail.trim()) return;
+
+    setEmailShareLoading(true);
+    setEmailShareError(null);
+    setEmailShareSuccess(null);
+
+    try {
+      const res = await fetch(`/api/unit/${unit.id}/share`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: shareEmail.trim() }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setEmailShareError(data.error || "Failed to share.");
+        return;
+      }
+
+      setEmailShareSuccess(`Shared with ${data.sharedWith?.email || shareEmail}`);
+      setShareEmail("");
+      // Refresh the shared-with list
+      fetchSharedWith();
+      // Clear success message after a few seconds
+      setTimeout(() => setEmailShareSuccess(null), 3000);
+    } catch (err) {
+      setEmailShareError("Something went wrong. Please try again.");
+    } finally {
+      setEmailShareLoading(false);
+    }
+  }
+
+  /** Remove a share */
+  async function handleRemoveShare(shareId: string) {
+    setRemoveShareLoading(shareId);
+    try {
+      const res = await fetch(`/api/unit/${unit.id}/share`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shareId }),
+      });
+      if (!res.ok) throw new Error("Failed to remove share");
+      // Remove from local state immediately
+      setSharedWith((prev) => prev.filter((s) => s.shareId !== shareId));
+    } catch (err) {
+      console.error("Failed to remove share:", err);
+    } finally {
+      setRemoveShareLoading(null);
     }
   }
 
@@ -686,10 +777,9 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities, isOwner = true
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={handleShare}
-                disabled={shareLoading}
+                onClick={openShareModal}
               >
-                {shareLoading ? "Generating…" : "Share"}
+                Share
               </Button>
             </div>
 
@@ -735,8 +825,8 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities, isOwner = true
       )}
     </div>
 
-    {/* ---- Share Link Modal ---- */}
-    {showShareModal && shareUrl && (
+    {/* ---- Enhanced Share Modal (Google Docs-style) ---- */}
+    {showShareModal && (
       <>
         <div
           className="fixed inset-0 z-[90] bg-ink/20 backdrop-blur-sm"
@@ -744,8 +834,9 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities, isOwner = true
           aria-hidden="true"
         />
         <div className="fixed inset-0 z-[95] flex items-center justify-center p-4">
-          <div className="w-full max-w-md rounded-xl border border-ruled bg-paper p-6 shadow-xl">
-            <div className="flex items-center justify-between mb-4">
+          <div className="w-full max-w-lg rounded-xl border border-ruled bg-paper shadow-xl">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-ruled px-6 py-4">
               <h3 className="font-display text-lg text-ink">Share Unit</h3>
               <button
                 onClick={() => setShowShareModal(false)}
@@ -757,23 +848,155 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities, isOwner = true
                 </svg>
               </button>
             </div>
-            <p className="font-ui text-sm text-pencil mb-4">
-              Share this link with another teacher. When they open it, the unit will appear in their &quot;Shared with Me&quot; tab.
-            </p>
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                readOnly
-                value={shareUrl}
-                className="flex-1 rounded-md border border-ruled bg-cream px-3 py-2 font-ui text-sm text-graphite"
-                onClick={(e) => (e.target as HTMLInputElement).select()}
-              />
-              <button
-                onClick={copyShareUrl}
-                className="focus-ring shrink-0 rounded-md bg-ink px-4 py-2 font-ui text-sm font-semibold text-white transition hover:bg-ink-light"
-              >
-                {shareCopied ? "Copied!" : "Copy"}
-              </button>
+
+            <div className="px-6 py-5 space-y-5">
+              {/* ---- Method 1: Share by email ---- */}
+              <div>
+                <p className="font-ui text-sm font-medium text-graphite mb-2">
+                  Share with a teacher
+                </p>
+                <form onSubmit={handleEmailShare} className="flex items-center gap-2">
+                  <input
+                    type="email"
+                    placeholder="teacher@school.edu"
+                    value={shareEmail}
+                    onChange={(e) => {
+                      setShareEmail(e.target.value);
+                      setEmailShareError(null);
+                    }}
+                    className="flex-1 rounded-md border border-ruled bg-cream px-3 py-2 font-ui text-sm text-graphite placeholder:text-pencil/50 transition focus:border-ink focus:outline-none focus:ring-1 focus:ring-ink/20"
+                    disabled={emailShareLoading}
+                  />
+                  <button
+                    type="submit"
+                    disabled={emailShareLoading || !shareEmail.trim()}
+                    className="focus-ring shrink-0 rounded-md bg-ink px-4 py-2 font-ui text-sm font-semibold text-white transition hover:bg-ink-light disabled:opacity-50"
+                  >
+                    {emailShareLoading ? "Sharing..." : "Share"}
+                  </button>
+                </form>
+
+                {/* Error / success messages */}
+                {emailShareError && (
+                  <p className="mt-2 font-ui text-xs text-red-600">{emailShareError}</p>
+                )}
+                {emailShareSuccess && (
+                  <div className="mt-2 flex items-center gap-1.5 rounded-md bg-emerald-50 border border-emerald-200 px-3 py-2">
+                    <svg className="h-4 w-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <p className="font-ui text-xs text-emerald-700">{emailShareSuccess}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* ---- Shared-with list ---- */}
+              {sharesLoading ? (
+                <div className="flex items-center justify-center py-4">
+                  <p className="font-ui text-xs text-pencil">Loading...</p>
+                </div>
+              ) : sharedWith.length > 0 ? (
+                <div>
+                  <p className="font-ui text-[11px] font-bold uppercase tracking-wider text-ink/50 mb-2">
+                    Shared with
+                  </p>
+                  <div className="space-y-1 max-h-48 overflow-y-auto">
+                    {sharedWith.map((share) => (
+                      <div
+                        key={share.shareId}
+                        className="flex items-center justify-between rounded-lg px-3 py-2 transition hover:bg-chalk/50 group"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          {/* Avatar circle with initial */}
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink/10 text-ink">
+                            <span className="font-ui text-xs font-semibold uppercase">
+                              {(share.displayName || share.email)?.[0] || "?"}
+                            </span>
+                          </div>
+                          <div className="min-w-0">
+                            {share.displayName && (
+                              <p className="font-ui text-sm font-medium text-graphite truncate">
+                                {share.displayName}
+                              </p>
+                            )}
+                            <p className="font-ui text-xs text-pencil truncate">
+                              {share.email}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleRemoveShare(share.shareId)}
+                          disabled={removeShareLoading === share.shareId}
+                          className="shrink-0 rounded p-1 text-pencil/40 opacity-0 transition group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 disabled:opacity-50"
+                          aria-label={`Remove share with ${share.email}`}
+                        >
+                          {removeShareLoading === share.shareId ? (
+                            <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                            </svg>
+                          ) : (
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {/* ---- Divider ---- */}
+              <div className="flex items-center gap-3">
+                <div className="flex-1 border-t border-ruled" />
+                <span className="font-ui text-[11px] font-medium uppercase tracking-wider text-pencil/60">
+                  Or share via link
+                </span>
+                <div className="flex-1 border-t border-ruled" />
+              </div>
+
+              {/* ---- Method 2: Share via link ---- */}
+              <div>
+                <p className="font-ui text-xs text-pencil mb-2">
+                  Anyone with this link can view the unit and add it to their account.
+                </p>
+                {shareLoading ? (
+                  <div className="flex items-center justify-center rounded-md border border-ruled bg-cream px-3 py-2">
+                    <p className="font-ui text-xs text-pencil">Generating link...</p>
+                  </div>
+                ) : shareUrl ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={shareUrl}
+                      className="flex-1 rounded-md border border-ruled bg-cream px-3 py-2 font-ui text-xs text-graphite"
+                      onClick={(e) => (e.target as HTMLInputElement).select()}
+                    />
+                    <button
+                      onClick={copyShareUrl}
+                      className="focus-ring shrink-0 rounded-md border border-ruled bg-chalk px-3 py-2 font-ui text-xs font-medium text-graphite transition hover:bg-ink hover:text-white hover:border-ink"
+                    >
+                      {shareCopied ? (
+                        <span className="flex items-center gap-1">
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                          Copied
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1">
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                          Copy link
+                        </span>
+                      )}
+                    </button>
+                  </div>
+                ) : null}
+              </div>
             </div>
           </div>
         </div>
