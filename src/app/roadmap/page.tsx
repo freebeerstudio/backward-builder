@@ -1,0 +1,178 @@
+import Link from "next/link";
+import { ButterflyLogo } from "@/components/ui/ButterflyLogo";
+
+/**
+ * Public roadmap page — shows shipped features, in-progress work, and planned items.
+ * Linked from the footer. Designed to show judges the product vision.
+ */
+
+type RoadmapItem = {
+  title: string;
+  description: string;
+};
+
+const SHIPPED: RoadmapItem[] = [
+  { title: "AI-Powered Unit Creation", description: "Conversational chat interface builds complete UbD unit plans from a single enduring understanding" },
+  { title: "3-Stage UbD Pipeline", description: "Stage 1 (Desired Results) → Stage 2 (Evidence) → Stage 3 (Learning Plan) — each stage feeds context to the next" },
+  { title: "State Standards Alignment", description: "Automatic mapping to standards from all 50 U.S. states" },
+  { title: "Bloom's Taxonomy Classification", description: "AI classifies learning objectives by cognitive level" },
+  { title: "GRASPS Performance Tasks", description: "AI-generated authentic performance tasks with detailed multi-criterion rubrics" },
+  { title: "Auto-Graded Checks for Understanding", description: "Formative assessments with selected-response and short-answer questions, graded in real time" },
+  { title: "Student Share Links", description: "Students access checks on any device with a code — no login required" },
+  { title: "Teacher Results Dashboard", description: "Per-question analytics showing exactly what needs to be retaught" },
+  { title: "Unit Sharing", description: "Share units with colleagues directly by email or via shareable link" },
+  { title: "Community Library", description: "Publish units for other teachers to discover and learn from" },
+  { title: "Quick-Start Prompts", description: "Common lesson templates for fast unit creation" },
+  { title: "Demo Account", description: "Explore sample units without creating an account" },
+];
+
+const IN_PROGRESS: RoadmapItem[] = [
+  { title: "Enhanced Rubric Editor", description: "Inline editing of rubric criteria and proficiency levels" },
+  { title: "Bulk Unit Management", description: "Archive, duplicate, and organize units across semesters" },
+];
+
+const PLANNED: RoadmapItem[] = [
+  { title: "Unit Cloning from Community", description: "Fork a community unit into your own collection and customize it for your students" },
+  { title: "Google Classroom Integration", description: "Push checks and performance tasks directly to Google Classroom assignments" },
+  { title: "PDF & Print Export", description: "Export complete unit plans, rubrics, and checks as printable PDFs" },
+  { title: "Multi-Language Support", description: "Generate units and student-facing content in Spanish, French, and other languages" },
+  { title: "School & District Admin Dashboard", description: "Bird's-eye view of unit creation, standards coverage, and teacher adoption across a building or district" },
+  { title: "AI-Powered Reteach Suggestions", description: "After grading, AI recommends specific activities to address common misconceptions" },
+  { title: "Vertical Alignment View", description: "See how units across grade levels build toward the same enduring understandings over time" },
+  { title: "Collaborative Unit Authoring", description: "Multiple teachers co-build a unit in real time with shared editing and comments" },
+  { title: "Student Self-Reflection Prompts", description: "AI-generated metacognitive prompts that help students assess their own understanding" },
+  { title: "LMS Integrations", description: "Connect with Canvas, Schoology, and other learning management systems for seamless workflow" },
+  { title: "Standards Coverage Heatmap", description: "Visualize which standards you've covered and where the gaps are across all your units" },
+];
+
+function RoadmapSection({
+  icon,
+  title,
+  subtitle,
+  items,
+  cardBorder,
+}: {
+  icon: string;
+  title: string;
+  subtitle: string;
+  items: RoadmapItem[];
+  cardBorder: string;
+}) {
+  return (
+    <section className="mb-12">
+      <div className="mb-6">
+        <h2 className="font-display text-2xl font-bold text-ink flex items-center gap-2">
+          <span className="text-2xl">{icon}</span> {title}
+          <span className="ml-2 rounded-full bg-chalk px-3 py-0.5 font-ui text-xs font-medium text-pencil">
+            {items.length}
+          </span>
+        </h2>
+        <p className="mt-1 text-sm text-pencil">{subtitle}</p>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {items.map((item) => (
+          <div
+            key={item.title}
+            className={`rounded-lg border ${cardBorder} bg-white p-5 shadow-sm transition hover:shadow-md`}
+          >
+            <h3 className="font-display text-base font-semibold text-ink">{item.title}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-pencil">{item.description}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export default function RoadmapPage() {
+  return (
+    <div className="min-h-screen bg-cream">
+      {/* Header */}
+      <header className="border-b border-ruled bg-white/80 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
+          <Link href="/" className="inline-flex items-center gap-2" aria-label="Home">
+            <ButterflyLogo size={28} className="text-ink" />
+            <span className="font-display text-xl font-bold text-ink">Backward Builder</span>
+          </Link>
+          <Link
+            href="/"
+            className="rounded-lg border border-ruled bg-chalk px-4 py-2 font-ui text-sm font-medium text-ink transition hover:bg-white"
+          >
+            ← Back to Home
+          </Link>
+        </div>
+      </header>
+
+      {/* Hero */}
+      <div className="border-b border-ruled bg-gradient-to-b from-white to-cream px-4 py-12 sm:px-6 sm:py-16">
+        <div className="mx-auto max-w-4xl text-center">
+          <h1 className="font-display text-4xl font-bold tracking-tight text-ink sm:text-5xl">
+            Product Roadmap
+          </h1>
+          <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-pencil">
+            Where we&apos;ve been, where we&apos;re going, and what&apos;s next for Backward Builder.
+            We&apos;re building the unit planning tool teachers deserve.
+          </p>
+          <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-4 py-2">
+            <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+            <span className="font-ui text-sm font-medium text-ink">Actively building</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Roadmap Content */}
+      <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+        <RoadmapSection
+          icon="✅"
+          title="Shipped"
+          subtitle="Live and working — try them now at BackwardBuilder.com"
+          items={SHIPPED}
+          cardBorder="border-green-200"
+        />
+
+        <RoadmapSection
+          icon="🔨"
+          title="In Progress"
+          subtitle="Currently being built — coming soon"
+          items={IN_PROGRESS}
+          cardBorder="border-gold/40"
+        />
+
+        <RoadmapSection
+          icon="📋"
+          title="Planned"
+          subtitle="On our radar — the future of unit planning"
+          items={PLANNED}
+          cardBorder="border-ruled"
+        />
+
+        {/* CTA */}
+        <div className="mt-12 rounded-xl border border-ruled bg-white p-8 text-center shadow-sm">
+          <h2 className="font-display text-2xl font-bold text-ink">Have an idea?</h2>
+          <p className="mt-2 text-pencil">
+            We&apos;re building this for teachers. If there&apos;s something you&apos;d love to see,
+            we&apos;d love to hear about it.
+          </p>
+          <a
+            href="mailto:wayne@freebeer.ai?subject=Backward Builder Feature Idea"
+            className="mt-6 inline-flex items-center gap-2 rounded-lg bg-ink px-6 py-3 font-ui text-sm font-semibold text-chalk shadow-sm transition hover:bg-ink-light"
+          >
+            Share Your Idea →
+          </a>
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-ruled bg-chalk px-4 py-6 sm:px-6">
+        <div className="mx-auto max-w-6xl text-center">
+          <p className="text-xs text-pencil">
+            © 2026 Backward Builder · Built by{" "}
+            <a href="https://freebeer.ai" className="underline hover:text-ink" target="_blank" rel="noopener noreferrer">
+              Free Beer Studio
+            </a>
+          </p>
+        </div>
+      </footer>
+    </div>
+  );
+}

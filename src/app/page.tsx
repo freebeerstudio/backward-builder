@@ -273,6 +273,7 @@ export default async function Home() {
                 <li><a href="/api/demo" className="focus-ring text-sm text-pencil transition hover:text-ink">Try the Demo</a></li>
                 <li><Link href="/dashboard" className="focus-ring text-sm text-pencil transition hover:text-ink">My Units</Link></li>
                 <li><a href="https://github.com/freebeerstudio/backward-builder" target="_blank" rel="noopener noreferrer" className="focus-ring text-sm text-pencil transition hover:text-ink">Source Code</a></li>
+                <li><Link href="/roadmap" className="focus-ring text-sm text-pencil transition hover:text-ink">Roadmap</Link></li>
               </ul>
             </div>
           </div>
