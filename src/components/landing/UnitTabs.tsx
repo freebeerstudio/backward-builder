@@ -66,10 +66,10 @@ export function UnitTabs({
     setActiveSubject(null);
   }, [activeTab]);
 
-  const tabs: { key: Tab; label: string; count: number; comingSoon?: boolean }[] = [
+  const tabs: { key: Tab; label: string; count: number }[] = [
     { key: "my-units", label: "My Units", count: myUnits.length },
-    { key: "shared", label: "Shared with Me", count: sharedUnits.length, comingSoon: true },
-    { key: "community", label: "Community", count: communityUnits.length, comingSoon: true },
+    { key: "shared", label: "Shared with Me", count: sharedUnits.length },
+    { key: "community", label: "Community", count: communityUnits.length },
   ];
 
   /* Unauthenticated users always see community units */
@@ -139,12 +139,7 @@ export function UnitTabs({
                   }`}
                 >
                   {tab.label}
-                  {tab.comingSoon && (
-                    <span className="ml-1.5 inline-flex items-center rounded-full bg-amber/10 border border-amber/20 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber whitespace-nowrap">
-                      Coming Soon
-                    </span>
-                  )}
-                  {tab.count > 0 && !tab.comingSoon && (
+                  {tab.count > 0 && (
                     <span className={`ml-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold ${
                       activeTab === tab.key
                         ? "bg-ink text-white"

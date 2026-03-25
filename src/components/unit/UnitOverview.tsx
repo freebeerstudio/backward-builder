@@ -22,6 +22,7 @@ interface UnitData {
   cognitiveLevel: CognitiveLevel | null;
   cognitiveLevelExplanation: string | null;
   status: string;
+  isPublic: boolean;
 }
 
 interface UnitOverviewProps {
@@ -109,6 +110,17 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities, isOwner = true
   const router = useRouter();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
+  /* ---- Share modal state ---- */
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+
+  /* ---- Community publish state ---- */
+  const [isPublic, setIsPublic] = useState(unit.isPublic);
+  const [publishLoading, setPublishLoading] = useState(false);
+  const [showPublishConfirm, setShowPublishConfirm] = useState(false);
+
   /* ---- Inline-editable Essential Questions state ---- */
   const [editingEQs, setEditingEQs] = useState(false);
   const [eqDraft, setEqDraft] = useState<string[]>(unit.essentialQuestions || []);
@@ -170,6 +182,58 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities, isOwner = true
       setEqError(err instanceof Error ? err.message : "Failed to save");
     } finally {
       setEqSaving(false);
+    }
+  }
+
+  /** Generate a share link for this unit */
+  async function handleShare() {
+    setShareLoading(true);
+    try {
+      const res = await fetch(`/api/unit/${unit.id}/share`, { method: "POST" });
+      if (!res.ok) throw new Error("Failed to generate share link");
+      const data = await res.json();
+      setShareUrl(data.shareUrl);
+      setShowShareModal(true);
+    } catch (err) {
+      console.error("Share failed:", err);
+    } finally {
+      setShareLoading(false);
+    }
+  }
+
+  /** Copy share URL to clipboard */
+  async function copyShareUrl() {
+    if (!shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } catch {
+      // Fallback for older browsers
+      const textArea = document.createElement("textarea");
+      textArea.value = shareUrl;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    }
+  }
+
+  /** Toggle community publishing */
+  async function handlePublishToggle() {
+    setPublishLoading(true);
+    try {
+      const res = await fetch(`/api/unit/${unit.id}/community`, { method: "POST" });
+      if (!res.ok) throw new Error("Failed to update community status");
+      const data = await res.json();
+      setIsPublic(data.isPublic);
+      setShowPublishConfirm(false);
+    } catch (err) {
+      console.error("Publish toggle failed:", err);
+    } finally {
+      setPublishLoading(false);
     }
   }
 
@@ -595,7 +659,173 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities, isOwner = true
           )}
         </>
       )}
+
+      {/* ---- Share with Teachers & Publish to Community ---- */}
+      {isOwner && (
+        <Card hover>
+          <div className="flex items-center gap-3 mb-5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <h2 className="font-display text-lg text-ink">
+              Share & Collaborate
+            </h2>
+          </div>
+
+          <div className="space-y-4">
+            {/* Share with Teachers */}
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-ruled bg-chalk/30 px-4 py-3">
+              <div>
+                <p className="font-ui text-sm font-medium text-graphite">Share with Teachers</p>
+                <p className="font-ui text-xs text-pencil mt-0.5">
+                  Generate a link to share this unit with other teachers.
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleShare}
+                disabled={shareLoading}
+              >
+                {shareLoading ? "Generating…" : "Share"}
+              </Button>
+            </div>
+
+            {/* Publish to Community */}
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-ruled bg-chalk/30 px-4 py-3">
+              <div>
+                <p className="font-ui text-sm font-medium text-graphite">
+                  Publish to Community
+                  {isPublic && (
+                    <span className="ml-2 inline-flex items-center rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-700">
+                      Published
+                    </span>
+                  )}
+                </p>
+                <p className="font-ui text-xs text-pencil mt-0.5">
+                  {isPublic
+                    ? "This unit is visible in the community library."
+                    : "Make this unit available to all teachers in the community library."}
+                </p>
+              </div>
+              {isPublic ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowPublishConfirm(true)}
+                  disabled={publishLoading}
+                >
+                  Unpublish
+                </Button>
+              ) : (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => setShowPublishConfirm(true)}
+                  disabled={publishLoading}
+                >
+                  Publish
+                </Button>
+              )}
+            </div>
+          </div>
+        </Card>
+      )}
     </div>
+
+    {/* ---- Share Link Modal ---- */}
+    {showShareModal && shareUrl && (
+      <>
+        <div
+          className="fixed inset-0 z-[90] bg-ink/20 backdrop-blur-sm"
+          onClick={() => setShowShareModal(false)}
+          aria-hidden="true"
+        />
+        <div className="fixed inset-0 z-[95] flex items-center justify-center p-4">
+          <div className="w-full max-w-md rounded-xl border border-ruled bg-paper p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-display text-lg text-ink">Share Unit</h3>
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="rounded p-1 text-pencil transition hover:bg-chalk hover:text-ink"
+                aria-label="Close"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <p className="font-ui text-sm text-pencil mb-4">
+              Share this link with another teacher. When they open it, the unit will appear in their &quot;Shared with Me&quot; tab.
+            </p>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                readOnly
+                value={shareUrl}
+                className="flex-1 rounded-md border border-ruled bg-cream px-3 py-2 font-ui text-sm text-graphite"
+                onClick={(e) => (e.target as HTMLInputElement).select()}
+              />
+              <button
+                onClick={copyShareUrl}
+                className="focus-ring shrink-0 rounded-md bg-ink px-4 py-2 font-ui text-sm font-semibold text-white transition hover:bg-ink-light"
+              >
+                {shareCopied ? "Copied!" : "Copy"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </>
+    )}
+
+    {/* ---- Publish Confirmation Modal ---- */}
+    {showPublishConfirm && (
+      <>
+        <div
+          className="fixed inset-0 z-[90] bg-ink/20 backdrop-blur-sm"
+          onClick={() => setShowPublishConfirm(false)}
+          aria-hidden="true"
+        />
+        <div className="fixed inset-0 z-[95] flex items-center justify-center p-4">
+          <div className="w-full max-w-md rounded-xl border border-ruled bg-paper p-6 shadow-xl">
+            <h3 className="font-display text-lg text-ink mb-3">
+              {isPublic ? "Remove from Community?" : "Publish to Community?"}
+            </h3>
+            <p className="font-ui text-sm text-pencil mb-5">
+              {isPublic
+                ? "This unit will no longer be visible in the community library. Teachers who already have it shared will keep their access."
+                : "This unit will be visible to all teachers in the community library. Your name will be shown as the author."}
+            </p>
+            <div className="flex items-center justify-end gap-2">
+              <button
+                onClick={() => setShowPublishConfirm(false)}
+                disabled={publishLoading}
+                className="focus-ring rounded-md px-4 py-2 font-ui text-sm font-medium text-pencil transition hover:bg-chalk hover:text-ink disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePublishToggle}
+                disabled={publishLoading}
+                className={`focus-ring rounded-md px-4 py-2 font-ui text-sm font-semibold text-white transition disabled:opacity-50 ${
+                  isPublic
+                    ? "bg-red-600 hover:bg-red-700"
+                    : "bg-ink hover:bg-ink-light"
+                }`}
+              >
+                {publishLoading
+                  ? "Updating…"
+                  : isPublic
+                    ? "Unpublish"
+                    : "Publish"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </>
+    )}
     </>
   );
 }

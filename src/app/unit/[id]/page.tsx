@@ -161,6 +161,7 @@ export default async function UnitPage({ params }: UnitPageProps) {
     cognitiveLevel: unit.cognitiveLevel as CognitiveLevel | null,
     cognitiveLevelExplanation: unit.cognitiveLevelExplanation,
     status: unit.status,
+    isPublic: unit.isPublic,
   };
 
   return (

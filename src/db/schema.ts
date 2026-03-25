@@ -188,6 +188,21 @@ export const studentSubmissions = pgTable("student_submissions", {
  * Individual answers within a submission.
  * MC auto-graded immediately; short answer stored for review.
  */
+/**
+ * Unit shares — allows teachers to share units with other teachers via a link.
+ * The recipient sees the unit in their "Shared with Me" tab.
+ */
+export const unitShares = pgTable("unit_shares", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  unitId: uuid("unit_id")
+    .notNull()
+    .references(() => units.id, { onDelete: "cascade" }),
+  teacherId: uuid("teacher_id")
+    .references(() => teachers.id), // the recipient — null until someone accepts
+  shareCode: varchar("share_code", { length: 8 }).notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const studentAnswers = pgTable("student_answers", {
   id: uuid("id").defaultRandom().primaryKey(),
   submissionId: uuid("submission_id")

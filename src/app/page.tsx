@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { db } from "@/db";
-import { teachers, units } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { teachers, units, unitShares } from "@/db/schema";
+import { eq, desc, and, isNotNull, ne } from "drizzle-orm";
 import { HeroChatBox } from "@/components/landing/HeroChatBox";
 import { UnitTabs, type UnitCardData } from "@/components/landing/UnitTabs";
 import { LandingHeader } from "@/components/landing/LandingHeader";
@@ -63,11 +63,6 @@ const FALLBACK_COMMUNITY_UNITS: UnitCardData[] = [
   { id: "c8", title: "Geometric Transformations", description: "Translations, rotations, reflections, and real-world symmetry", subject: "Math", grade: "7th", teacher: "Mrs. Kim", initial: "K", uses: 129, color: "var(--color-subj-math)", href: "#" },
 ];
 
-/* Placeholder shared units for the demo teacher */
-const SHARED_UNITS: UnitCardData[] = [
-  { id: "s1", title: "The Civil Rights Movement", description: "How nonviolent resistance and legal strategy dismantled Jim Crow laws", subject: "History", grade: "8th", teacher: "Mr. Rodriguez", initial: "R", color: "var(--color-subj-history)", href: "#" },
-  { id: "s2", title: "Genetics & Heredity", description: "How traits are passed from parents to offspring through DNA", subject: "Science", grade: "7th", teacher: "Mrs. Johnson", initial: "J", color: "var(--color-subj-science)", href: "#" },
-];
 
 /* ------------------------------------------------------------------ */
 /*  Server component: detect auth, fetch units, render page            */
@@ -81,6 +76,7 @@ export default async function Home() {
   let teacherName: string | null = null;
   let teacherInitial = "";
   let myUnits: UnitCardData[] = [];
+  let sharedUnits: UnitCardData[] = [];
 
   if (sessionId) {
     /* Fetch teacher record */
@@ -113,6 +109,42 @@ export default async function Home() {
         status: u.status,
         color: guessSubjectColor(u.enduringUnderstanding, teacher.subject),
         href: `/unit/${u.id}`,
+      }));
+
+      /* Fetch units shared with this teacher (via unit_shares) */
+      const sharedRows = await db
+        .select({
+          unitId: unitShares.unitId,
+          unitTitle: units.title,
+          unitEU: units.enduringUnderstanding,
+          unitStatus: units.status,
+          authorName: teachers.displayName,
+          authorSubject: teachers.subject,
+          authorGrade: teachers.gradeLevel,
+        })
+        .from(unitShares)
+        .innerJoin(units, eq(unitShares.unitId, units.id))
+        .innerJoin(teachers, eq(units.teacherId, teachers.id))
+        .where(
+          and(
+            eq(unitShares.teacherId, teacher.id),
+            ne(units.teacherId, teacher.id) // exclude own units
+          )
+        )
+        .orderBy(desc(unitShares.createdAt))
+        .limit(20);
+
+      sharedUnits = sharedRows.map((s) => ({
+        id: s.unitId,
+        title: s.unitTitle,
+        description: s.unitEU.slice(0, 120) + (s.unitEU.length > 120 ? "…" : ""),
+        subject: guessSubjectLabel(s.unitEU, s.authorSubject),
+        grade: s.authorGrade || "—",
+        teacher: s.authorName || "Teacher",
+        initial: (s.authorName?.[0] || "T").toUpperCase(),
+        status: s.unitStatus,
+        color: guessSubjectColor(s.unitEU, s.authorSubject),
+        href: `/unit/${s.unitId}`,
       }));
     }
   }
@@ -185,7 +217,7 @@ export default async function Home() {
       <UnitTabs
         isAuthenticated={isAuthenticated}
         myUnits={myUnits}
-        sharedUnits={isAuthenticated ? SHARED_UNITS : []}
+        sharedUnits={sharedUnits}
         communityUnits={communityUnits}
         teacherName={teacherName || undefined}
       />
