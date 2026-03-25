@@ -176,13 +176,22 @@ export default function StudentCheckPage() {
     return (
       <StudentShell title={data.check.title} unitTitle={data.check.unitTitle}>
         <div className="space-y-6">
-          <div className="text-center space-y-2">
+          <div className="text-center space-y-3">
+            {/* Icon */}
+            <div className="mx-auto h-14 w-14 rounded-full bg-forest/10 flex items-center justify-center">
+              <svg className="h-7 w-7 text-forest" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" />
+              </svg>
+            </div>
             <h2 className="text-lg font-heading font-semibold text-text">
-              Before you begin
+              Check for Understanding
             </h2>
-            <p className="text-sm text-text-light font-body">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-warmwhite border border-border text-xs font-body text-text-light">
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
               {totalQuestions} question{totalQuestions !== 1 ? "s" : ""}
-            </p>
+            </div>
           </div>
 
           <div className="space-y-4">
@@ -305,11 +314,17 @@ export default function StudentCheckPage() {
               </p>
             </div>
 
-            {/* Score display */}
-            <div className="inline-flex flex-col items-center gap-1 px-6 py-4 rounded-xl bg-warmwhite border border-border">
-              <span className="text-3xl font-heading font-bold text-forest">
-                {totalScore}<span className="text-lg text-text-light">/{maxScore}</span>
+            {/* Score display card with gold accent */}
+            <div className="inline-flex flex-col items-center gap-1.5 px-8 py-5 rounded-lg bg-warmwhite border border-gold/30 shadow-[0_2px_8px_rgba(212,168,67,0.1)]">
+              <span className="text-4xl font-heading font-bold text-forest">
+                {totalScore}<span className="text-xl text-text-light font-normal">/{maxScore}</span>
               </span>
+              <div className="w-full h-1.5 rounded-full bg-border/40 overflow-hidden mt-1">
+                <div
+                  className="h-full bg-forest rounded-full transition-all duration-500"
+                  style={{ width: `${percentage}%` }}
+                />
+              </div>
               <span className="text-sm font-body text-text-light">
                 {percentage}% {hasShortAnswer ? "(auto-graded portion)" : ""}
               </span>
@@ -322,9 +337,13 @@ export default function StudentCheckPage() {
 
           {/* Per-question breakdown */}
           <div className="space-y-3">
-            <h3 className="text-sm font-heading font-semibold text-text uppercase tracking-wide">
-              Question Breakdown
-            </h3>
+            <div className="flex items-center gap-2">
+              <div className="h-px flex-1 bg-border" />
+              <h3 className="text-xs font-heading font-semibold text-text-light uppercase tracking-widest">
+                Question Breakdown
+              </h3>
+              <div className="h-px flex-1 bg-border" />
+            </div>
 
             <div className="space-y-3">
               {questionResults.map((result, i) => (
@@ -656,21 +675,34 @@ function StudentShell({
 }) {
   return (
     <div className="min-h-screen bg-warmwhite">
-      <div className="mx-auto w-full max-w-[640px] px-4 py-6 sm:py-10">
-        {/* Header */}
+      {/* Branded top bar */}
+      <div className="bg-forest text-white px-4 py-2.5 text-center">
+        <span className="text-xs font-heading font-semibold tracking-wide opacity-90">
+          Backward Builder
+        </span>
+      </div>
+
+      <div className="mx-auto w-full max-w-[720px] px-4 py-6 sm:py-10">
+        {/* Header with gold accent line */}
         <div className="text-center mb-6">
-          <p className="text-xs font-body text-text-light uppercase tracking-wide mb-1">
+          <p className="text-xs font-body text-text-light uppercase tracking-widest mb-2">
             {unitTitle}
           </p>
-          <h1 className="text-xl font-heading font-bold text-forest">
+          <h1 className="text-xl sm:text-2xl font-heading font-bold text-forest">
             {title}
           </h1>
+          <div className="mt-3 mx-auto w-12 h-0.5 rounded-full bg-gold" />
         </div>
 
         {/* Content card */}
-        <div className="bg-card rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-5 sm:p-8">
+        <div className="bg-card rounded-lg shadow-[0_2px_12px_rgba(0,0,0,0.06)] border border-border p-5 sm:p-8">
           {children}
         </div>
+
+        {/* Footer attribution */}
+        <p className="text-center text-[10px] text-text-light/60 font-body mt-6">
+          Powered by Backward Builder &middot; BackwardBuilder.com
+        </p>
       </div>
     </div>
   );
