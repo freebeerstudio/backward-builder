@@ -26,23 +26,24 @@ const SHIPPED: RoadmapItem[] = [
   { title: "Demo Account", description: "Explore sample units without creating an account" },
 ];
 
-const IN_PROGRESS: RoadmapItem[] = [
-  { title: "Enhanced Rubric Editor", description: "Inline editing of rubric criteria and proficiency levels" },
-  { title: "Bulk Unit Management", description: "Archive, duplicate, and organize units across semesters" },
-];
+const IN_PROGRESS: RoadmapItem[] = [];
 
 const PLANNED: RoadmapItem[] = [
+  { title: "Enhanced Rubric Editor", description: "Inline editing of rubric criteria and proficiency levels with drag-and-drop reordering" },
+  { title: "Bulk Unit Management", description: "Archive, duplicate, and organize units across semesters and school years" },
   { title: "Unit Cloning from Community", description: "Fork a community unit into your own collection and customize it for your students" },
   { title: "Google Classroom Integration", description: "Push checks and performance tasks directly to Google Classroom assignments" },
-  { title: "PDF & Print Export", description: "Export complete unit plans, rubrics, and checks as printable PDFs" },
-  { title: "Multi-Language Support", description: "Generate units and student-facing content in Spanish, French, and other languages" },
+  { title: "PDF & Print Export", description: "Export complete unit plans, rubrics, and checks as printable PDFs for department binders and admin review" },
+  { title: "Multi-Language Support", description: "Generate units and student-facing content in Spanish, French, and other languages for ELL classrooms" },
   { title: "School & District Admin Dashboard", description: "Bird's-eye view of unit creation, standards coverage, and teacher adoption across a building or district" },
-  { title: "AI-Powered Reteach Suggestions", description: "After grading, AI recommends specific activities to address common misconceptions" },
+  { title: "AI-Powered Reteach Suggestions", description: "After grading, AI recommends specific activities to address common misconceptions revealed by student responses" },
   { title: "Vertical Alignment View", description: "See how units across grade levels build toward the same enduring understandings over time" },
   { title: "Collaborative Unit Authoring", description: "Multiple teachers co-build a unit in real time with shared editing and comments" },
-  { title: "Student Self-Reflection Prompts", description: "AI-generated metacognitive prompts that help students assess their own understanding" },
+  { title: "Student Self-Reflection Prompts", description: "AI-generated metacognitive prompts that help students assess their own understanding after each check" },
   { title: "LMS Integrations", description: "Connect with Canvas, Schoology, and other learning management systems for seamless workflow" },
   { title: "Standards Coverage Heatmap", description: "Visualize which standards you've covered and where the gaps are across all your units" },
+  { title: "Cross-School Unit Analytics", description: "Compare unit effectiveness across classrooms and schools to identify what works best for different student populations" },
+  { title: "Parent & Guardian View", description: "Share a simplified unit overview with families so they understand what their child is learning and how they'll be assessed" },
 ];
 
 function RoadmapSection({
@@ -69,17 +70,23 @@ function RoadmapSection({
         </h2>
         <p className="mt-1 text-sm text-pencil">{subtitle}</p>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {items.map((item) => (
-          <div
-            key={item.title}
-            className={`rounded-lg border ${cardBorder} bg-white p-5 shadow-sm transition hover:shadow-md`}
-          >
-            <h3 className="font-display text-base font-semibold text-ink">{item.title}</h3>
-            <p className="mt-2 text-sm leading-relaxed text-pencil">{item.description}</p>
-          </div>
-        ))}
-      </div>
+      {items.length > 0 ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {items.map((item) => (
+            <div
+              key={item.title}
+              className={`rounded-lg border ${cardBorder} bg-white p-5 shadow-sm transition hover:shadow-md`}
+            >
+              <h3 className="font-display text-base font-semibold text-ink">{item.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-pencil">{item.description}</p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-lg border border-dashed border-ruled bg-chalk/50 p-8 text-center">
+          <p className="text-sm text-pencil">All caught up! Check back soon for what we&apos;re working on next.</p>
+        </div>
+      )}
     </section>
   );
 }
