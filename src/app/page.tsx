@@ -252,7 +252,6 @@ export default async function Home() {
               <ul className="mt-3 space-y-2.5">
                 <li><a href="https://www.nextgenscience.org/search-standards" target="_blank" rel="noopener noreferrer" className="focus-ring text-sm text-pencil transition hover:text-ink">NGSS Standards Directory</a></li>
                 <li><a href="https://www.thecorestandards.org/read-the-standards/" target="_blank" rel="noopener noreferrer" className="focus-ring text-sm text-pencil transition hover:text-ink">Common Core State Standards</a></li>
-                <li><a href="https://www.achieve.org/our-initiatives/equip/tools" target="_blank" rel="noopener noreferrer" className="focus-ring text-sm text-pencil transition hover:text-ink">EQuIP Rubric for Quality Units</a></li>
                 <li><a href="https://dese.mo.gov/college-career-readiness/curriculum/missouri-learning-standards" target="_blank" rel="noopener noreferrer" className="focus-ring text-sm text-pencil transition hover:text-ink">Missouri Learning Standards</a></li>
                 <li><Link href="/standards-sources" className="focus-ring text-sm font-medium text-ink transition hover:text-ink-light">Our Standards Sources ↗</Link></li>
               </ul>
