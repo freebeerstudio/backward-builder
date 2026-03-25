@@ -264,7 +264,6 @@ export default async function Home() {
                 <li><a href="https://www.learningforjustice.org/" target="_blank" rel="noopener noreferrer" className="focus-ring text-sm text-pencil transition hover:text-ink">Learning for Justice</a></li>
                 <li><a href="https://www.edutopia.org/" target="_blank" rel="noopener noreferrer" className="focus-ring text-sm text-pencil transition hover:text-ink">Edutopia</a></li>
                 <li><a href="https://cpalms.org/" target="_blank" rel="noopener noreferrer" className="focus-ring text-sm text-pencil transition hover:text-ink">CPALMS Curriculum Resources</a></li>
-                <li><a href="https://www.understood.org/en/articles/universal-design-for-learning-udl-what-it-is-and-how-it-works" target="_blank" rel="noopener noreferrer" className="focus-ring text-sm text-pencil transition hover:text-ink">Universal Design for Learning</a></li>
               </ul>
             </div>
 
