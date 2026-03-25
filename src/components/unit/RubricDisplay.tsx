@@ -14,29 +14,29 @@ interface RubricDisplayProps {
 function RubricDisplay({ rubric, className = "" }: RubricDisplayProps) {
   return (
     <div className={className}>
-      {/* Desktop: Full table layout */}
-      <div className="hidden md:block overflow-x-auto">
-        <table className="w-full border-collapse text-sm">
+      {/* Desktop: Full table layout — table-fixed prevents horizontal overflow */}
+      <div className="hidden lg:block">
+        <table className="w-full table-fixed border-collapse text-sm">
           <thead>
             <tr className="bg-forest text-white">
-              <th className="px-4 py-3 text-left font-heading font-semibold rounded-tl-lg">
+              <th className="w-[18%] px-3 py-3 text-left font-heading font-semibold text-xs rounded-tl-lg">
                 Criterion
               </th>
-              <th className="px-4 py-3 text-center font-heading font-semibold">
+              <th className="w-[20.5%] px-3 py-3 text-center font-heading font-semibold text-xs">
                 <span className="block">Exemplary</span>
-                <span className="text-xs font-normal opacity-80">(4)</span>
+                <span className="text-[10px] font-normal opacity-80">(4)</span>
               </th>
-              <th className="px-4 py-3 text-center font-heading font-semibold">
+              <th className="w-[20.5%] px-3 py-3 text-center font-heading font-semibold text-xs">
                 <span className="block">Proficient</span>
-                <span className="text-xs font-normal opacity-80">(3)</span>
+                <span className="text-[10px] font-normal opacity-80">(3)</span>
               </th>
-              <th className="px-4 py-3 text-center font-heading font-semibold">
+              <th className="w-[20.5%] px-3 py-3 text-center font-heading font-semibold text-xs">
                 <span className="block">Developing</span>
-                <span className="text-xs font-normal opacity-80">(2)</span>
+                <span className="text-[10px] font-normal opacity-80">(2)</span>
               </th>
-              <th className="px-4 py-3 text-center font-heading font-semibold rounded-tr-lg">
+              <th className="w-[20.5%] px-3 py-3 text-center font-heading font-semibold text-xs rounded-tr-lg">
                 <span className="block">Beginning</span>
-                <span className="text-xs font-normal opacity-80">(1)</span>
+                <span className="text-[10px] font-normal opacity-80">(1)</span>
               </th>
             </tr>
           </thead>
@@ -56,18 +56,18 @@ function RubricDisplay({ rubric, className = "" }: RubricDisplayProps) {
                     ${isEvenRow ? "bg-warmwhite" : "bg-card"}
                   `}
                 >
-                  <td className="px-4 py-3 align-top">
-                    <div className="font-heading font-semibold text-forest-dark">
+                  <td className="px-3 py-3 align-top">
+                    <div className="font-heading font-semibold text-forest-dark text-xs">
                       {criterion.criterionName}
                     </div>
-                    <div className="mt-1 text-xs text-text-light">
+                    <div className="mt-1 text-[10px] text-text-light">
                       {criterion.weight} pts
                     </div>
                   </td>
                   {sortedLevels.map((level) => (
                     <td
                       key={level.score}
-                      className="px-4 py-3 align-top text-text leading-relaxed"
+                      className="px-3 py-3 align-top text-text text-xs leading-relaxed"
                     >
                       {level.description}
                     </td>
@@ -78,7 +78,7 @@ function RubricDisplay({ rubric, className = "" }: RubricDisplayProps) {
                       (_, i) => (
                         <td
                           key={`empty-${i}`}
-                          className="px-4 py-3 text-text-light italic"
+                          className="px-3 py-3 text-text-light italic text-xs"
                         >
                           --
                         </td>
@@ -100,8 +100,8 @@ function RubricDisplay({ rubric, className = "" }: RubricDisplayProps) {
         </div>
       </div>
 
-      {/* Mobile: Stacked card layout */}
-      <div className="md:hidden space-y-4">
+      {/* Mobile + Tablet: Stacked card layout (shows below lg breakpoint) */}
+      <div className="lg:hidden space-y-4">
         {rubric.map((criterion) => {
           const sortedLevels = [...criterion.levels].sort(
             (a, b) => b.score - a.score
