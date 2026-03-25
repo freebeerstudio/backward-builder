@@ -243,7 +243,6 @@ export default async function Home() {
               <ul className="mt-3 space-y-2.5">
                 <li><a href="https://www.ascd.org/books/understanding-by-design-expanded-2nd-edition" target="_blank" rel="noopener noreferrer" className="focus-ring text-sm text-pencil transition hover:text-ink">Understanding by Design — ASCD</a></li>
                 <li><a href="https://jaymctighe.com/" target="_blank" rel="noopener noreferrer" className="focus-ring text-sm text-pencil transition hover:text-ink">Jay McTighe&apos;s Resources</a></li>
-                <li><a href="https://www.edutopia.org/topic/understanding-by-design" target="_blank" rel="noopener noreferrer" className="focus-ring text-sm text-pencil transition hover:text-ink">Edutopia — UbD Articles</a></li>
               </ul>
             </div>
 
