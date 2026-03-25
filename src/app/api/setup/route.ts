@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { teachers } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { getOrCreateSessionId } from "@/lib/teacher-session";
+import { getSessionId, getOrCreateSessionId } from "@/lib/teacher-session";
 
 /**
  * Derives the standards framework from subject and state.
@@ -49,7 +49,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const sessionId = await getOrCreateSessionId();
+    // Prefer the existing session (set by auth signup/signin) to avoid
+    // creating a competing session that overwrites the auth cookie.
+    // Only fall back to getOrCreateSessionId for the standalone /setup page.
+    const sessionId = (await getSessionId()) || (await getOrCreateSessionId());
     const standardsFramework = deriveStandardsFramework(subject, state);
 
     // Check if teacher already exists for this session

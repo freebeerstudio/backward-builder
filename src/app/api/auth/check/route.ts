@@ -15,7 +15,9 @@ export async function GET() {
   const sessionId = cookieStore.get("teacher_session")?.value;
 
   if (!sessionId) {
-    return NextResponse.json({ authenticated: false });
+    return NextResponse.json({ authenticated: false }, {
+      headers: { "Cache-Control": "no-store, max-age=0" },
+    });
   }
 
   const [teacher] = await db
@@ -29,7 +31,9 @@ export async function GET() {
     .limit(1);
 
   if (!teacher) {
-    return NextResponse.json({ authenticated: false });
+    return NextResponse.json({ authenticated: false }, {
+      headers: { "Cache-Control": "no-store, max-age=0" },
+    });
   }
 
   return NextResponse.json({
@@ -37,5 +41,13 @@ export async function GET() {
     teacherId: teacher.id,
     displayName: teacher.displayName,
     email: teacher.email,
+  }, {
+    headers: { "Cache-Control": "no-store, max-age=0" },
   });
 }
+
+/**
+ * Prevent Next.js from statically caching this route.
+ * Auth state depends on cookies and must always be evaluated fresh.
+ */
+export const dynamic = "force-dynamic";

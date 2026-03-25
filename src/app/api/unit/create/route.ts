@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { teachers, units } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { getOrCreateSessionId } from "@/lib/teacher-session";
+import { getSessionId } from "@/lib/teacher-session";
 import { analyzeUnderstanding } from "@/lib/claude";
 import { validateStandardCodes } from "@/lib/standards";
 import { getAuthenticatedTeacher } from "@/lib/auth";
@@ -36,8 +36,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // Get teacher from session
-    const sessionId = await getOrCreateSessionId();
+    // Get teacher from session — use getSessionId (not getOrCreate) since
+    // auth is already verified above. Never create a competing session here.
+    const sessionId = await getSessionId();
+    if (!sessionId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+
     const [teacher] = await db
       .select()
       .from(teachers)

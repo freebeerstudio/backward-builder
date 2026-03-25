@@ -19,7 +19,7 @@ function Header() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch("/api/auth/check")
+    fetch("/api/auth/check", { cache: "no-store" })
       .then((r) => r.json())
       .then((data) => {
         if (data.authenticated) {

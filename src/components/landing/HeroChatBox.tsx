@@ -122,9 +122,11 @@ export function HeroChatBox() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
-  /* Check auth status on mount (non-blocking) */
+  /* Check auth status on mount (non-blocking).
+   * cache: "no-store" prevents the browser from returning a stale
+   * response after the user signs in — that was causing auth re-prompts. */
   useEffect(() => {
-    fetch("/api/auth/check")
+    fetch("/api/auth/check", { cache: "no-store" })
       .then((r) => r.json())
       .then((data) => setIsAuthenticated(data.authenticated))
       .catch(() => setIsAuthenticated(false));
@@ -204,7 +206,7 @@ export function HeroChatBox() {
     // If we haven't checked auth yet, check now
     if (isAuthenticated === null) {
       try {
-        const res = await fetch("/api/auth/check");
+        const res = await fetch("/api/auth/check", { cache: "no-store" });
         const data = await res.json();
         setIsAuthenticated(data.authenticated);
         if (!data.authenticated) {
