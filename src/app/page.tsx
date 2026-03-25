@@ -262,7 +262,7 @@ export default async function Home() {
               <h3 className="font-ui text-xs font-bold uppercase tracking-wider text-ink/60">Unit Planning</h3>
               <ul className="mt-3 space-y-2.5">
                 <li><a href="https://www.learningforjustice.org/" target="_blank" rel="noopener noreferrer" className="focus-ring text-sm text-pencil transition hover:text-ink">Learning for Justice</a></li>
-                <li><a href="https://www.teachingchannel.com/" target="_blank" rel="noopener noreferrer" className="focus-ring text-sm text-pencil transition hover:text-ink">Teaching Channel</a></li>
+                <li><a href="https://www.edutopia.org/" target="_blank" rel="noopener noreferrer" className="focus-ring text-sm text-pencil transition hover:text-ink">Edutopia</a></li>
                 <li><a href="https://cpalms.org/" target="_blank" rel="noopener noreferrer" className="focus-ring text-sm text-pencil transition hover:text-ink">CPALMS Curriculum Resources</a></li>
                 <li><a href="https://www.understood.org/en/articles/universal-design-for-learning-udl-what-it-is-and-how-it-works" target="_blank" rel="noopener noreferrer" className="focus-ring text-sm text-pencil transition hover:text-ink">Universal Design for Learning</a></li>
               </ul>
