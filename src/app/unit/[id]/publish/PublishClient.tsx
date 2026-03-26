@@ -68,6 +68,7 @@ function PublishClient({
   );
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const handlePublish = useCallback(async () => {
     setPhase("publishing");
@@ -135,6 +136,10 @@ function PublishClient({
 
   function projectForStudents(url: string) {
     window.open(url, "_blank", "fullscreen=yes,toolbar=no,menubar=no");
+  }
+
+  function toggleCard(id: string) {
+    setExpandedId((prev) => (prev === id ? null : id));
   }
 
   // --- Publishing transition ---
@@ -292,7 +297,7 @@ function PublishClient({
     );
   }
 
-  // --- Post-publish: celebration + share links ---
+  // --- Post-publish: celebration + collapsible share cards ---
   return (
     <div className="space-y-6 relative">
       {/* Confetti overlay */}
@@ -320,12 +325,12 @@ function PublishClient({
             Your Unit is LIVE!
           </h2>
           <p className="text-sm text-text-light font-body">
-            Share the links below with your students.
+            Tap a card below to reveal its share link and QR code.
           </p>
         </div>
       </Card>
 
-      {/* Performance task links */}
+      {/* Performance task cards */}
       {publishedTasks.length > 0 && (
         <div
           className="space-y-3 animate-fade-in-up"
@@ -335,27 +340,22 @@ function PublishClient({
             Performance Task
           </h3>
           {publishedTasks.map((task, i) => (
-            <div
+            <CollapsibleShareCard
               key={task.id}
-              className="space-y-3 animate-fade-in-up"
-              style={{ animationDelay: `${200 + i * 100}ms` }}
-            >
-              <ShareLinkCard
-                item={task}
-                type="task"
-                copiedId={copiedId}
-                onCopy={copyToClipboard}
-                onProject={projectForStudents}
-              />
-              <div className="flex justify-center">
-                <QRCodeDisplay url={task.url} size={180} />
-              </div>
-            </div>
+              item={task}
+              type="task"
+              isExpanded={expandedId === task.id}
+              onToggle={() => toggleCard(task.id)}
+              copiedId={copiedId}
+              onCopy={copyToClipboard}
+              onProject={projectForStudents}
+              animationDelay={200 + i * 100}
+            />
           ))}
         </div>
       )}
 
-      {/* Check links */}
+      {/* Check cards */}
       {publishedChecks.length > 0 && (
         <div
           className="space-y-3 animate-fade-in-up"
@@ -367,24 +367,17 @@ function PublishClient({
             Checks for Understanding
           </h3>
           {publishedChecks.map((check, i) => (
-            <div
+            <CollapsibleShareCard
               key={check.id}
-              className="space-y-3 animate-fade-in-up"
-              style={{
-                animationDelay: `${300 + publishedTasks.length * 100 + i * 100}ms`,
-              }}
-            >
-              <ShareLinkCard
-                item={check}
-                type="check"
-                copiedId={copiedId}
-                onCopy={copyToClipboard}
-                onProject={projectForStudents}
-              />
-              <div className="flex justify-center">
-                <QRCodeDisplay url={check.url} size={180} />
-              </div>
-            </div>
+              item={check}
+              type="check"
+              isExpanded={expandedId === check.id}
+              onToggle={() => toggleCard(check.id)}
+              copiedId={copiedId}
+              onCopy={copyToClipboard}
+              onProject={projectForStudents}
+              animationDelay={300 + publishedTasks.length * 100 + i * 100}
+            />
           ))}
         </div>
       )}
@@ -428,53 +421,71 @@ function ConfettiOverlay() {
   );
 }
 
-// --- Share link card with live badge + project button ---
+// --- Collapsible share card with expand/collapse animation ---
 
-function ShareLinkCard({
+function CollapsibleShareCard({
   item,
   type,
+  isExpanded,
+  onToggle,
   copiedId,
   onCopy,
   onProject,
+  animationDelay,
 }: {
   item: PublishedItem;
   type: "check" | "task";
+  isExpanded: boolean;
+  onToggle: () => void;
   copiedId: string | null;
   onCopy: (url: string, id: string) => void;
   onProject: (url: string) => void;
+  animationDelay: number;
 }) {
   const isCopied = copiedId === item.id;
+  const badgeColor =
+    type === "task"
+      ? "bg-gold/20 text-gold"
+      : "bg-forest/10 text-forest";
+  const badgeLabel = type === "task" ? "Performance Task" : "Check";
 
   return (
-    <Card className="flex flex-col sm:flex-row sm:items-center gap-3">
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <span
-            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-heading font-semibold
-              ${type === "task" ? "bg-gold/20 text-gold" : "bg-forest/10 text-forest"}`}
-          >
-            <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse-live" />
-            Live
-          </span>
-        </div>
-        <p className="text-sm font-heading font-semibold text-text truncate">
-          {item.title}
-        </p>
-        <p className="text-xs text-text-light font-body font-mono truncate mt-0.5">
-          {item.url}
-        </p>
-      </div>
-      <div className="flex items-center gap-2 shrink-0">
-        {/* Project for Students button */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onProject(item.url)}
-          className="min-w-[90px] text-xs"
-          title="Open in full screen for classroom projection"
+    <div
+      className="animate-fade-in-up"
+      style={{ animationDelay: `${animationDelay}ms` }}
+    >
+      <Card className="overflow-hidden border border-ruled hover:shadow-md transition-shadow duration-200">
+        {/* Collapsed header — always visible, acts as toggle */}
+        <button
+          onClick={onToggle}
+          className="w-full flex items-center gap-3 cursor-pointer text-left group"
+          aria-expanded={isExpanded}
         >
+          {/* Type badge */}
+          <span
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-heading font-semibold shrink-0 ${badgeColor}`}
+          >
+            {badgeLabel}
+          </span>
+
+          {/* Title */}
+          <span className="flex-1 min-w-0 text-sm font-heading font-semibold text-text truncate">
+            {item.title}
+          </span>
+
+          {/* Live indicator dot */}
+          <span className="flex items-center gap-1.5 shrink-0">
+            <span className="h-2 w-2 rounded-full bg-success animate-pulse-live" />
+            <span className="text-xs font-heading font-medium text-success">
+              Live
+            </span>
+          </span>
+
+          {/* Chevron — rotates on expand */}
           <svg
-            className="h-4 w-4"
+            className={`h-5 w-5 text-text-light shrink-0 transition-transform duration-300 ease-in-out ${
+              isExpanded ? "rotate-180" : "rotate-0"
+            }`}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -483,57 +494,111 @@ function ShareLinkCard({
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7M3 7l9 6 9-6M3 7h18"
+              d="M19 9l-7 7-7-7"
             />
           </svg>
-          Project
-        </Button>
+        </button>
 
-        {/* Copy link button */}
-        <Button
-          variant={isCopied ? "primary" : "secondary"}
-          size="sm"
-          onClick={() => onCopy(item.url, item.id)}
-          className="shrink-0 min-w-[100px]"
+        {/* Expandable content — animated with grid rows trick */}
+        <div
+          className="grid transition-[grid-template-rows] duration-300 ease-in-out"
+          style={{
+            gridTemplateRows: isExpanded ? "1fr" : "0fr",
+          }}
         >
-          {isCopied ? (
-            <>
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
+          <div className="overflow-hidden">
+            {/* Divider */}
+            <div className="border-t border-ruled mt-4 pt-4" />
+
+            {/* Share link row */}
+            <div className="flex items-center gap-2 rounded-lg bg-warmwhite px-3 py-2 mb-4">
+              <p className="flex-1 min-w-0 text-xs text-text-light font-body font-mono truncate select-all">
+                {item.url}
+              </p>
+              <Button
+                variant={isCopied ? "primary" : "secondary"}
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCopy(item.url, item.id);
+                }}
+                className="shrink-0"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-              Copied!
-            </>
-          ) : (
-            <>
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
+                {isCopied ? (
+                  <>
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                      />
+                    </svg>
+                    Copy Link
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {/* QR code */}
+            <div className="flex justify-center mb-4">
+              <QRCodeDisplay url={item.url} size={180} />
+            </div>
+
+            {/* Project for Students button */}
+            <div className="flex justify-center">
+              <Button
+                variant="ghost"
+                size="md"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onProject(item.url);
+                }}
+                className="text-sm gap-2"
+                title="Open in full screen for classroom projection"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                />
-              </svg>
-              Copy Link
-            </>
-          )}
-        </Button>
-      </div>
-    </Card>
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7M3 7l9 6 9-6M3 7h18"
+                  />
+                </svg>
+                Project for Students
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Card>
+    </div>
   );
 }
 
