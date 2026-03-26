@@ -30,6 +30,7 @@ const SHIPPED: RoadmapItem[] = [
 const IN_PROGRESS: RoadmapItem[] = [];
 
 const PLANNED: RoadmapItem[] = [
+  { title: "Paced Unit Delivery", description: "Go live with one check or performance task at a time — control the pacing of your unit in real time, with separate results for each assessment as students complete them" },
   { title: "Variable Unit Lengths", description: "Support for units of different durations — from a single-day mini-unit to a multi-week deep dive — with AI adapting the scope of performance tasks, checks, and learning activities accordingly" },
   { title: "Enhanced Rubric Editor", description: "Inline editing of rubric criteria and proficiency levels with drag-and-drop reordering" },
   { title: "Bulk Unit Management", description: "Archive, duplicate, and organize units across semesters and school years" },
