@@ -176,7 +176,7 @@ export default function RoadmapPage() {
             we&apos;d love to hear about it.
           </p>
           <a
-            href="mailto:wayne@freebeer.ai?subject=Backward Builder Feature Idea"
+            href="mailto:wayne@freebeer.ai"
             className="mt-6 inline-flex items-center gap-2 rounded-lg bg-ink px-6 py-3 font-ui text-sm font-semibold text-chalk shadow-sm transition hover:bg-ink-light"
           >
             Share Your Idea →
