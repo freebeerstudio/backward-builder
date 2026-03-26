@@ -10,16 +10,24 @@ It works for any grade level, any subject area, and any U.S. state standards.
 
 ## How It Works
 
-Teachers interact through a conversational chat interface with grade-level, subject, and state standard pickers. The AI pipeline follows the 3-stage UbD framework:
+Teachers interact through a conversational chat interface with grade-level, subject, and state standard pickers. The AI pipeline follows the UbD framework across 5 stages:
 
+**Design (Stages 1–3):**
 1. **Stage 1 — Desired Results:** The AI maps the teacher's enduring understanding to state standards, classifies the cognitive level using Bloom's Taxonomy, and generates essential questions.
 2. **Stage 2 — Evidence:** The AI generates GRASPS performance tasks with multi-criterion rubrics, plus formative Checks for Understanding with auto-graded questions.
 3. **Stage 3 — Learning Plan:** The AI generates sequenced instructional activities that scaffold toward the performance task.
 
+**Deploy & Analyze (Stages 4–5):**
+4. **Stage 4 — Go Live:** Publish checks and performance tasks to students via share links and QR codes. Students access on any device — no login required.
+5. **Stage 5 — Results:** Per-question analytics, auto-graded check results, and reteach insights showing exactly what needs to be retaught.
+
 Each stage feeds context to the next — the performance tasks align to the standards, the checks align to the rubric criteria, and the learning plan builds toward the performance task. This chained pipeline is a key differentiator.
+
+The unit overview serves as mission control — after completing design (Stages 1–3), teachers see Stages 4 and 5 with clear status indicators. Stage 4 unlocks after design is complete. Stage 5 unlocks after the unit goes live. Teachers design on their own schedule and deploy when they're ready.
 
 ## Features
 
+- **5-stage UbD pipeline** with mission control unit overview
 - **Conversational unit creation** with quick-start prompts for common lessons
 - **State standards alignment** across all 50 states
 - **Bloom's Taxonomy classification** of learning objectives
@@ -28,6 +36,8 @@ Each stage feeds context to the next — the performance tasks align to the stan
 - **Teacher results dashboard** with per-question analytics and reteach insights
 - **Unit sharing** — share units directly with colleagues by email or via link
 - **Community library** — publish units for other teachers to discover
+- **Save for later** — complete unit design and deploy when ready
+- **Public roadmap** — see what's planned at [BackwardBuilder.com/roadmap](https://backwardbuilder.com/roadmap)
 - **Demo account** — explore pre-built sample units without signing up
 
 ## Tech Stack
@@ -54,8 +64,13 @@ npm run dev                  # Start dev server at http://localhost:3000
 src/
   app/                       # Next.js App Router pages and API routes
     api/                     # REST API endpoints
-    unit/[id]/               # Unit overview and stage pages
+    unit/[id]/               # Unit overview (mission control)
+    unit/[id]/stage2/        # Stage 2: Evidence
+    unit/[id]/stage3/        # Stage 3: Learning Plan
+    unit/[id]/publish/       # Stage 4: Go Live
+    unit/[id]/results/       # Stage 5: Results
     check/[shareCode]/       # Student-facing check pages
+    roadmap/                 # Public product roadmap
   components/
     ui/                      # Shared UI components
     unit/                    # UbD-specific components
