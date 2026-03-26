@@ -258,11 +258,11 @@ export default function ResultsPage() {
     <div className="min-h-screen bg-warmwhite">
       <Header />
       <PageContainer wide className="py-8 pb-16">
-        {/* Progress indicator — all stages complete */}
+        {/* Progress indicator — Stage 5 (Results) is current */}
         <div className="mb-8">
           <UbDProgressIndicator
-            currentStage={3}
-            completedStages={[1, 2, 3]}
+            currentStage={5}
+            completedStages={[1, 2, 3, 4]}
           />
         </div>
 

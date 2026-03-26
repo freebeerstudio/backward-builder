@@ -3,7 +3,7 @@
 // --- Enums ---
 
 export type QuestionType = "selected_response" | "short_answer";
-export type UnitStatus = "stage1" | "stage2" | "stage3" | "complete";
+export type UnitStatus = "stage1" | "stage2" | "stage3" | "ready" | "live" | "complete";
 export type AssessmentStatus = "draft" | "live" | "closed";
 export type SubmissionType = "check" | "performance_task";
 export type CognitiveLevel = "remember" | "understand" | "apply" | "analyze" | "evaluate" | "create";

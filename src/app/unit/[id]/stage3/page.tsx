@@ -85,12 +85,17 @@ export default async function Stage3Page({ params }: Stage3PageProps) {
   if (
     unit.status === "stage2" ||
     unit.status === "stage3" ||
+    unit.status === "ready" ||
+    unit.status === "live" ||
     unit.status === "complete"
   ) {
     completedStages.push(2);
   }
-  if (unit.status === "stage3" || unit.status === "complete") {
+  if (unit.status === "stage3" || unit.status === "ready" || unit.status === "live" || unit.status === "complete") {
     completedStages.push(3);
+  }
+  if (unit.status === "live" || unit.status === "complete") {
+    completedStages.push(4);
   }
 
   const hasActivities = activities.length > 0;

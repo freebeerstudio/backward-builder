@@ -21,6 +21,8 @@ export const unitStatusEnum = pgEnum("unit_status", [
   "stage1",
   "stage2",
   "stage3",
+  "ready",
+  "live",
   "complete",
 ]);
 

@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: UnitPageProps): Promise<Metad
 }
 
 /**
- * Unit overview page — the 3-stage UbD dashboard.
+ * Unit overview page — the 5-stage UbD dashboard.
  *
  * Uses the academic editorial aesthetic: cream background, paper-white
  * cards, ink navy typography, ruled borders. Matches the landing page.
@@ -93,13 +93,17 @@ export default async function UnitPage({ params }: UnitPageProps) {
   const hasChecks = checks.length > 0;
   const hasActivities = activities.length > 0;
 
-  // Determine current stage and completed stages
+  // Determine current stage and completed stages across the 5-stage flow
   const completedStages: number[] = [1];
   if (hasTasks && hasChecks) completedStages.push(2);
   if (hasActivities) completedStages.push(3);
+  if (unit.status === "live" || unit.status === "complete") completedStages.push(4);
+  // Stage 5 (results) is never "complete" — it's an ongoing dashboard
 
-  let currentStage: 1 | 2 | 3 = 1;
-  if (hasActivities) currentStage = 3;
+  let currentStage: 1 | 2 | 3 | 4 | 5 = 1;
+  if (unit.status === "live" || unit.status === "complete") currentStage = 5;
+  else if (unit.status === "ready") currentStage = 3; // design done, show stage 3 as current
+  else if (hasActivities) currentStage = 3;
   else if (hasTasks && hasChecks) currentStage = 2;
 
   // Resolve standard URLs deterministically — never trust Claude's URLs.
@@ -177,7 +181,7 @@ export default async function UnitPage({ params }: UnitPageProps) {
             />
           </div>
 
-          {/* Unit overview with 3-stage cards */}
+          {/* Unit overview with 5-stage cards */}
           <UnitOverview
             unit={unitData}
             hasTasks={hasTasks}

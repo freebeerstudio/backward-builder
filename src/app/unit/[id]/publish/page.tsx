@@ -53,16 +53,16 @@ export default async function PublishPage({
     .from(checksForUnderstanding)
     .where(eq(checksForUnderstanding.unitId, unitId));
 
-  const isPublished = unit.status === "complete";
+  const isPublished = unit.status === "live" || unit.status === "complete";
 
   return (
     <div className="min-h-screen bg-warmwhite pb-16">
       <Header />
       <PageContainer className="pt-8 space-y-8">
-        {/* Progress indicator — all 3 complete */}
+        {/* Progress indicator — Stage 4 (Go Live) is current */}
         <UbDProgressIndicator
-          currentStage={3}
-          completedStages={[1, 2, 3]}
+          currentStage={4}
+          completedStages={isPublished ? [1, 2, 3, 4] : [1, 2, 3]}
         />
 
         {/* Header */}

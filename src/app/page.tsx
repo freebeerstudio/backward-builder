@@ -269,9 +269,7 @@ export default async function Home() {
             <div>
               <h3 className="font-ui text-xs font-bold uppercase tracking-wider text-ink/60">Product</h3>
               <ul className="mt-3 space-y-2.5">
-                <li><Link href="/setup" className="focus-ring text-sm text-pencil transition hover:text-ink">Design a Unit</Link></li>
                 <li><a href="/api/demo" className="focus-ring text-sm text-pencil transition hover:text-ink">Try the Demo</a></li>
-                <li><Link href="/dashboard" className="focus-ring text-sm text-pencil transition hover:text-ink">My Units</Link></li>
                 <li><a href="https://github.com/freebeerstudio/backward-builder" target="_blank" rel="noopener noreferrer" className="focus-ring text-sm text-pencil transition hover:text-ink">Source Code</a></li>
                 <li><Link href="/roadmap" className="focus-ring text-sm text-pencil transition hover:text-ink">Roadmap</Link></li>
               </ul>

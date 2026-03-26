@@ -14,7 +14,7 @@ import { validateUnitOwnership } from "@/lib/auth";
  *
  * Publishes a unit's assessments — generates share codes for all checks
  * and the selected performance task, sets their status to "live",
- * and marks the unit as "complete".
+ * and marks the unit as "live".
  */
 export async function POST(
   request: Request,
@@ -88,10 +88,10 @@ export async function POST(
       })
     );
 
-    // Update unit status to "complete"
+    // Update unit status to "live" (published and accessible to students)
     await db
       .update(units)
-      .set({ status: "complete", updatedAt: new Date() })
+      .set({ status: "live", updatedAt: new Date() })
       .where(eq(units.id, unitId));
 
     // Build response with URLs

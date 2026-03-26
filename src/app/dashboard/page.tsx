@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   title: "My Units — Backward Builder",
 };
 
-const statusConfig: Record<string, { label: string; classes: string }> = {
+const statusConfig: Record<string, { label: string; classes: string; action?: string }> = {
   stage1: {
     label: "Stage 1 — Desired Results",
     classes: "bg-blue-100 text-blue-800",
@@ -26,9 +26,20 @@ const statusConfig: Record<string, { label: string; classes: string }> = {
     label: "Stage 3 — Learning Plan",
     classes: "bg-orange-100 text-orange-800",
   },
+  ready: {
+    label: "Ready to Publish",
+    classes: "bg-amber-100 text-amber-800",
+    action: "go-live",
+  },
+  live: {
+    label: "Live",
+    classes: "bg-emerald-100 text-emerald-800",
+    action: "view-results",
+  },
   complete: {
     label: "Complete",
     classes: "bg-green-100 text-green-800",
+    action: "view-results",
   },
 };
 
@@ -113,36 +124,60 @@ export default async function DashboardPage() {
                   : unit.enduringUnderstanding;
 
                 return (
-                  <Link key={unit.id} href={`/unit/${unit.id}`}>
-                    <Card hover className="h-full">
-                      {/* Status badge */}
-                      <span
-                        className={`inline-block rounded-full px-3 py-0.5 text-xs font-medium font-body ${status.classes}`}
-                      >
-                        {status.label}
-                      </span>
+                  <div key={unit.id} className="relative">
+                    <Link href={`/unit/${unit.id}`}>
+                      <Card hover className="h-full">
+                        {/* Status badge */}
+                        <span
+                          className={`inline-block rounded-full px-3 py-0.5 text-xs font-medium font-body ${status.classes}`}
+                        >
+                          {status.label}
+                        </span>
 
-                      {/* Title */}
-                      <h2 className="mt-3 font-heading text-lg font-bold text-forest-dark">
-                        {unit.title}
-                      </h2>
+                        {/* Title */}
+                        <h2 className="mt-3 font-heading text-lg font-bold text-forest-dark">
+                          {unit.title}
+                        </h2>
 
-                      {/* Enduring understanding preview */}
-                      <p className="mt-2 font-body text-sm leading-relaxed text-text-light">
-                        {preview}
-                      </p>
-
-                      {/* Cognitive level */}
-                      {unit.cognitiveLevel && (
-                        <p className="mt-3 text-xs font-medium text-forest">
-                          Bloom&apos;s:{" "}
-                          <span className="capitalize">
-                            {unit.cognitiveLevel}
-                          </span>
+                        {/* Enduring understanding preview */}
+                        <p className="mt-2 font-body text-sm leading-relaxed text-text-light">
+                          {preview}
                         </p>
-                      )}
-                    </Card>
-                  </Link>
+
+                        {/* Cognitive level */}
+                        {unit.cognitiveLevel && (
+                          <p className="mt-3 text-xs font-medium text-forest">
+                            Bloom&apos;s:{" "}
+                            <span className="capitalize">
+                              {unit.cognitiveLevel}
+                            </span>
+                          </p>
+                        )}
+
+                        {/* Action links for ready/live units */}
+                        {status.action === "go-live" && (
+                          <div className="mt-4 pt-3 border-t border-gray-100">
+                            <span className="inline-flex items-center gap-1.5 rounded-md bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white">
+                              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                              </svg>
+                              Go Live
+                            </span>
+                          </div>
+                        )}
+                        {status.action === "view-results" && (
+                          <div className="mt-4 pt-3 border-t border-gray-100">
+                            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700">
+                              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                              </svg>
+                              View Results
+                            </span>
+                          </div>
+                        )}
+                      </Card>
+                    </Link>
+                  </div>
                 );
               })}
             </div>

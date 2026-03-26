@@ -103,6 +103,7 @@ export default async function Stage2Page({
         {/* Progress indicator */}
         <UbDProgressIndicator currentStage={2} completedStages={[1]} />
 
+
         {/* Page header */}
         <div className="mt-8 mb-8">
           <div className="flex items-center gap-2 text-sm text-text-light mb-1">
