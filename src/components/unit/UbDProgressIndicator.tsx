@@ -48,28 +48,6 @@ function UbDProgressIndicator({
     <nav aria-label="Unit design progress" className="w-full">
       {/* Desktop / tablet horizontal layout */}
       <div className="hidden sm:flex flex-col items-center gap-3">
-        {/* Phase labels */}
-        <div className="flex items-center justify-center gap-0 w-full">
-          {/* Design phase spans stages 1-3 */}
-          <div className="flex items-center justify-center" style={{ width: "60%" }}>
-            <span className="text-[10px] font-ui font-bold uppercase tracking-widest text-ink/40">
-              Design
-            </span>
-          </div>
-          {/* Deploy phase is stage 4 */}
-          <div className="flex items-center justify-center" style={{ width: "20%" }}>
-            <span className="text-[10px] font-ui font-bold uppercase tracking-widest text-ink/40">
-              Deploy
-            </span>
-          </div>
-          {/* Analyze phase is stage 5 */}
-          <div className="flex items-center justify-center" style={{ width: "20%" }}>
-            <span className="text-[10px] font-ui font-bold uppercase tracking-widest text-ink/40">
-              Analyze
-            </span>
-          </div>
-        </div>
-
         {/* Stage circles and connectors */}
         <div className="flex items-center justify-center gap-0">
           {stages.map((stage, index) => {
@@ -172,13 +150,10 @@ function UbDProgressIndicator({
 
           return (
             <div key={stage.number}>
-              {/* Phase boundary label on mobile */}
+              {/* Phase boundary spacer on mobile */}
               {isPhaseBoundary && (
-                <div className="flex items-center gap-3 py-2 pl-2.5">
-                  <div className="w-0.5 h-4 border-l-2 border-dashed border-ruled" />
-                  <span className="text-[9px] font-ui font-bold uppercase tracking-widest text-ink/30">
-                    Deploy & Analyze
-                  </span>
+                <div className="flex items-center gap-3 py-1 pl-2.5">
+                  <div className="w-0.5 h-3 border-l-2 border-dashed border-ruled" />
                 </div>
               )}
 
