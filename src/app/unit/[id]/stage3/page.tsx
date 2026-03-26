@@ -271,16 +271,16 @@ export default async function Stage3Page({ params }: Stage3PageProps) {
           {hasActivities && (
             <div className="flex items-center gap-3">
               <Link
-                href={`/unit/${unitId}/results`}
-                className="font-heading text-sm font-medium text-text-light hover:text-forest"
+                href={`/unit/${unitId}`}
+                className="rounded-lg border border-border bg-white px-5 py-2.5 font-heading text-sm font-semibold text-forest shadow-sm transition-all hover:bg-chalk hover:shadow-md"
               >
-                View Results
+                Save for Later
               </Link>
               <Link
-                href={`/unit/${unitId}/results`}
+                href={`/unit/${unitId}/publish`}
                 className="rounded-lg bg-forest px-6 py-2.5 font-heading text-sm font-semibold text-white shadow-sm transition-all hover:bg-forest-light hover:shadow-md"
               >
-                Continue to Results &rarr;
+                Go Live &rarr;
               </Link>
             </div>
           )}
