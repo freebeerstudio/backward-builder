@@ -13,7 +13,8 @@ type RoadmapItem = {
 
 const SHIPPED: RoadmapItem[] = [
   { title: "AI-Powered Unit Creation", description: "Conversational chat interface builds complete UbD unit plans from a single enduring understanding" },
-  { title: "3-Stage UbD Pipeline", description: "Stage 1 (Desired Results) → Stage 2 (Evidence) → Stage 3 (Learning Plan) — each stage feeds context to the next" },
+  { title: "5-Stage UbD Pipeline", description: "Design → Assess → Plan → Deploy → Analyze — Stage 1 (Desired Results) → Stage 2 (Evidence) → Stage 3 (Learning Plan) → Stage 4 (Go Live) → Stage 5 (Results)" },
+  { title: "Save for Later", description: "Complete unit design at your own pace — save after Stage 3 and publish when you're ready" },
   { title: "State Standards Alignment", description: "Automatic mapping to standards from all 50 U.S. states" },
   { title: "Bloom's Taxonomy Classification", description: "AI classifies learning objectives by cognitive level" },
   { title: "GRASPS Performance Tasks", description: "AI-generated authentic performance tasks with detailed multi-criterion rubrics" },
@@ -29,6 +30,7 @@ const SHIPPED: RoadmapItem[] = [
 const IN_PROGRESS: RoadmapItem[] = [];
 
 const PLANNED: RoadmapItem[] = [
+  { title: "Variable Unit Lengths", description: "Support for units of different durations — from a single-day mini-unit to a multi-week deep dive — with AI adapting the scope of performance tasks, checks, and learning activities accordingly" },
   { title: "Enhanced Rubric Editor", description: "Inline editing of rubric criteria and proficiency levels with drag-and-drop reordering" },
   { title: "Bulk Unit Management", description: "Archive, duplicate, and organize units across semesters and school years" },
   { title: "Unit Remix & Copy", description: "Copy any shared or community unit into your own collection, customize it for your students, and build on each other's best work" },
