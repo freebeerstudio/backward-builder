@@ -101,7 +101,7 @@ function StageCircle({
 }
 
 /**
- * UnitOverview — the 3-stage dashboard for a unit.
+ * UnitOverview — the 5-stage mission control dashboard for a unit.
  *
  * Academic editorial design: ink navy headers, paper-white cards with
  * ruled borders, serif display font for the title, clean typography.

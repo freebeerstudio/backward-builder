@@ -53,8 +53,8 @@ function guessSubjectLabel(eu: string, subject?: string | null): string {
 /*  Static fallback community units (shown when DB has no public units) */
 /* ------------------------------------------------------------------ */
 const FALLBACK_COMMUNITY_UNITS: UnitCardData[] = [
-  { id: "c1", title: "Ecosystem Interdependence", description: "Trophic cascades and the Yellowstone wolf reintroduction", subject: "Science", grade: "7th", teacher: "Ms. Jones", initial: "J", uses: 142, color: "var(--color-subj-science)", href: "/unit/00000000-0000-0000-0000-000000000010" },
-  { id: "c2", title: "Causes of the American Revolution", description: "Economic, political, and ideological tensions leading to independence", subject: "History", grade: "8th", teacher: "Mr. Rodriguez", initial: "R", uses: 98, color: "var(--color-subj-history)", href: "/unit/00000000-0000-0000-0000-000000000020" },
+  { id: "c1", title: "Causes of the American Revolution", description: "Economic, political, and ideological tensions leading to independence", subject: "History", grade: "8th", teacher: "Ms. Jones", initial: "J", uses: 98, color: "var(--color-subj-history)", href: "/unit/00000000-0000-0000-0000-000000000020" },
+  { id: "c2", title: "Fractions in Everyday Life", description: "Applying fraction operations to cooking, measurement, and equal sharing", subject: "Math", grade: "5th", teacher: "Ms. Jones", initial: "J", uses: 63, color: "var(--color-subj-math)", href: "/unit/00000000-0000-0000-0000-000000000030" },
 ];
 
 

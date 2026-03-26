@@ -67,7 +67,8 @@ export const teachers = pgTable("teachers", {
 
 /**
  * Units — the top-level entity in UbD. Everything hangs off a unit.
- * A unit has one enduring understanding and flows through 3 stages.
+ * A unit has one enduring understanding and flows through 5 stages
+ * (3 design stages + Stage 4 Go Live + Stage 5 Results).
  */
 export const units = pgTable("units", {
   id: uuid("id").defaultRandom().primaryKey(),

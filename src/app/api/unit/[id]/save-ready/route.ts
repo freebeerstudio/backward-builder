@@ -7,7 +7,7 @@ import { validateUnitOwnership } from "@/lib/auth";
 /**
  * POST /api/unit/[id]/save-ready
  *
- * Marks a unit as "ready" — design is complete (all 3 stages done)
+ * Marks a unit as "ready" — design is complete (all 3 design stages done)
  * but the teacher has chosen to save it for later rather than going
  * live immediately. The unit can be published later from the dashboard
  * or by navigating back to the unit.
