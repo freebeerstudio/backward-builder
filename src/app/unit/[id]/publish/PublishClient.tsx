@@ -381,6 +381,19 @@ function PublishClient({
           ))}
         </div>
       )}
+
+      {/* Back to Mission Control */}
+      <div className="flex justify-center pt-4 animate-fade-in-up" style={{ animationDelay: `${400 + (publishedTasks.length + publishedChecks.length) * 100}ms` }}>
+        <a
+          href={`/unit/${unitId}`}
+          className="inline-flex items-center gap-2 rounded-lg border border-ruled bg-white px-6 py-3 font-heading text-sm font-semibold text-text shadow-sm transition hover:shadow-md hover:bg-cream"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Mission Control
+        </a>
+      </div>
     </div>
   );
 }
