@@ -31,7 +31,7 @@ const IN_PROGRESS: RoadmapItem[] = [];
 const PLANNED: RoadmapItem[] = [
   { title: "Enhanced Rubric Editor", description: "Inline editing of rubric criteria and proficiency levels with drag-and-drop reordering" },
   { title: "Bulk Unit Management", description: "Archive, duplicate, and organize units across semesters and school years" },
-  { title: "Unit Cloning from Community", description: "Fork a community unit into your own collection and customize it for your students" },
+  { title: "Unit Remix & Copy", description: "Copy any shared or community unit into your own collection, customize it for your students, and build on each other's best work" },
   { title: "Google Classroom Integration", description: "Push checks and performance tasks directly to Google Classroom assignments" },
   { title: "PDF & Print Export", description: "Export complete unit plans, rubrics, and checks as printable PDFs for department binders and admin review" },
   { title: "Multi-Language Support", description: "Generate units and student-facing content in Spanish, French, and other languages for ELL classrooms" },

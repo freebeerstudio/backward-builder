@@ -372,17 +372,9 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities, isOwner = true
                 {authorName ? `Shared by ${authorName}` : "Community Unit"}
               </p>
               <p className="font-ui text-xs text-pencil mt-0.5">
-                {isAuthenticated
-                  ? "You're viewing a shared unit. Copy it to your account to customize."
-                  : "Sign up to create your own units or remix this one."}
+                You&apos;re viewing a shared unit. Remixing and copying are coming soon!
               </p>
             </div>
-            <button
-              onClick={() => setShowAuthModal(true)}
-              className="focus-ring rounded-lg bg-ink px-4 py-2 font-ui text-sm font-semibold text-white shadow-sm transition hover:bg-ink-light"
-            >
-              {isAuthenticated ? "Copy to My Units" : "Sign Up to Remix"}
-            </button>
           </div>
         </div>
       )}
