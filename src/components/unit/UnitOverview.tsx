@@ -654,134 +654,116 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities, isOwner = true
         )}
       </Card>
 
-      {/* ---- Design Complete Actions ---- */}
-      {/* After Stage 3, offer Save for Later or Go Live */}
-      {hasActivities && unit.status !== "live" && unit.status !== "complete" && unit.status !== "ready" && isOwner && (
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 rounded-xl border-2 border-dashed border-ruled bg-chalk/30 px-5 py-5">
-          <div className="flex-1">
-            <p className="font-display text-base text-ink mb-1">
-              Design Complete
-            </p>
-            <p className="font-ui text-sm text-pencil leading-relaxed">
-              Your unit plan is ready. Save it for later, or go live and share with students now.
-            </p>
+      {/* ---- Status Badge (shows after Stage 3 is complete) ---- */}
+      {hasActivities && unit.status !== "live" && unit.status !== "complete" && (
+        <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50/50 px-5 py-4">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+            <CheckIcon className="h-4 w-4" />
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <Button
-              variant="ghost"
-              size="md"
-              onClick={() => {
-                fetch(`/api/unit/${unit.id}/save-ready`, { method: "POST" })
-                  .then(() => router.push("/dashboard"))
-                  .catch(() => {});
-              }}
-            >
-              Save for Later
-            </Button>
-            <Button
-              variant="primary"
-              size="md"
-              onClick={() => router.push(`/unit/${unit.id}/publish`)}
-            >
-              Go Live →
-            </Button>
+          <div>
+            <p className="font-display text-sm font-semibold text-emerald-800">
+              Design Complete — Ready to Deploy
+            </p>
+            <p className="font-ui text-xs text-emerald-600 mt-0.5">
+              All three design stages are finished. Go live when you&apos;re ready to share with students.
+            </p>
           </div>
         </div>
       )}
 
       {/* ---- Stage 4: Go Live ---- */}
-      {(hasActivities || unit.status === "ready") && (
-        <Card hover>
-          <div className="flex items-center gap-3 mb-5">
-            <StageCircle number={4} isComplete={unit.status === "live" || unit.status === "complete"} />
-            <h2 className="font-display text-lg text-ink">
-              Stage 4: Go Live
-            </h2>
-          </div>
-
-          {unit.status === "live" || unit.status === "complete" ? (
-            <div className="space-y-2.5">
-              <div className="flex items-center gap-2">
-                <CheckIcon className="h-4 w-4 text-emerald-600" />
-                <span className="font-ui text-sm text-graphite">Unit is live — students can access checks and tasks</span>
-              </div>
-              <div className="pt-2 flex flex-wrap gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => guardedAction(() => window.open(`/unit/${unit.id}/publish`, '_blank'))}
-                >
-                  View QR Codes & Share Links
-                </Button>
-              </div>
-            </div>
-          ) : unit.status === "ready" ? (
-            <div>
-              <p className="font-ui text-sm text-pencil leading-relaxed mb-4">
-                Your unit design is complete and saved. Go live to generate share codes
-                and QR codes for students.
-              </p>
-              {isOwner && (
-                <Button
-                  variant="primary"
-                  size="md"
-                  onClick={() => router.push(`/unit/${unit.id}/publish`)}
-                >
-                  Go Live →
-                </Button>
-              )}
-            </div>
-          ) : (
-            <div>
-              <p className="font-ui text-sm text-pencil leading-relaxed mb-4">
-                Go live and share QR codes or short links with students.
-                They&apos;ll access checks for understanding and performance tasks
-                from any device — no login required.
-              </p>
-              {isOwner && (
-                <Button
-                  variant="primary"
-                  size="md"
-                  disabled={!hasActivities}
-                  onClick={() => router.push(`/unit/${unit.id}/publish`)}
-                >
-                  Go Live →
-                </Button>
-              )}
-              {!hasActivities && (
-                <p className="font-ui text-xs text-pencil mt-2">
-                  Complete Stage 3 first — all three design stages must be finished before going live.
-                </p>
-              )}
-            </div>
+      <Card hover={hasActivities}>
+        <div className={`flex items-center gap-3 mb-5 ${!hasActivities ? "opacity-40" : ""}`}>
+          <StageCircle number={4} isComplete={unit.status === "live" || unit.status === "complete"} />
+          <h2 className="font-display text-lg text-ink">
+            Stage 4: Go Live
+          </h2>
+          {!hasActivities && (
+            <span className="ml-auto flex items-center gap-1 rounded-full bg-chalk px-2.5 py-0.5 font-ui text-xs text-pencil">
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+              </svg>
+              Complete Stage 3 first
+            </span>
           )}
-        </Card>
-      )}
+        </div>
 
-      {/* ---- Stage 5: Results ---- */}
-      {(unit.status === "live" || unit.status === "complete") && (
-        <Card hover>
-          <div className="flex items-center gap-3 mb-5">
-            <StageCircle number={5} isComplete={false} />
-            <h2 className="font-display text-lg text-ink">
-              Stage 5: Results & Insights
-            </h2>
+        {unit.status === "live" || unit.status === "complete" ? (
+          <div className="space-y-2.5">
+            <div className="flex items-center gap-2">
+              <CheckIcon className="h-4 w-4 text-emerald-600" />
+              <span className="font-ui text-sm text-graphite">Unit is live — students can access checks and tasks</span>
+            </div>
+            <div className="pt-2 flex flex-wrap gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => guardedAction(() => window.open(`/unit/${unit.id}/publish`, '_blank'))}
+              >
+                View QR Codes & Share Links
+              </Button>
+            </div>
           </div>
-
-          <p className="font-ui text-sm text-pencil leading-relaxed mb-4">
-            View student submissions, auto-graded check results, AI-scored performance
-            tasks, and per-question accuracy breakdowns.
+        ) : hasActivities ? (
+          <div>
+            <p className="font-ui text-sm text-pencil leading-relaxed mb-4">
+              Share QR codes or short links with students. They&apos;ll access checks
+              for understanding and performance tasks from any device — no login required.
+            </p>
+            {isOwner && (
+              <Button
+                variant="primary"
+                size="md"
+                onClick={() => router.push(`/unit/${unit.id}/publish`)}
+              >
+                Go Live →
+              </Button>
+            )}
+          </div>
+        ) : (
+          <p className="font-ui text-sm text-pencil/50 leading-relaxed">
+            Share QR codes or short links with students. Complete Stage 3 to unlock this step.
           </p>
+        )}
+      </Card>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => guardedAction(() => router.push(`/unit/${unit.id}/results`))}
-          >
-            View Results Dashboard
-          </Button>
-        </Card>
-      )}
+      {/* ---- Stage 5: Results & Insights ---- */}
+      <Card hover={unit.status === "live" || unit.status === "complete"}>
+        <div className={`flex items-center gap-3 mb-5 ${unit.status !== "live" && unit.status !== "complete" ? "opacity-40" : ""}`}>
+          <StageCircle number={5} isComplete={false} />
+          <h2 className="font-display text-lg text-ink">
+            Stage 5: Results & Insights
+          </h2>
+          {unit.status !== "live" && unit.status !== "complete" && (
+            <span className="ml-auto flex items-center gap-1 rounded-full bg-chalk px-2.5 py-0.5 font-ui text-xs text-pencil">
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+              </svg>
+              Go live first
+            </span>
+          )}
+        </div>
+
+        {unit.status === "live" || unit.status === "complete" ? (
+          <>
+            <p className="font-ui text-sm text-pencil leading-relaxed mb-4">
+              View student submissions, auto-graded check results, and per-question
+              accuracy breakdowns that show exactly what needs reteaching.
+            </p>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => guardedAction(() => router.push(`/unit/${unit.id}/results`))}
+            >
+              View Results Dashboard
+            </Button>
+          </>
+        ) : (
+          <p className="font-ui text-sm text-pencil/50 leading-relaxed">
+            Student submissions, auto-graded results, and reteach insights will appear here after your unit is live.
+          </p>
+        )}
+      </Card>
 
       {/* ---- Share with Teachers & Publish to Community ---- */}
       {isOwner && (

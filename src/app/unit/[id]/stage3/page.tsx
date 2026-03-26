@@ -269,20 +269,12 @@ export default async function Stage3Page({ params }: Stage3PageProps) {
           </Link>
 
           {hasActivities && (
-            <div className="flex items-center gap-3">
-              <Link
-                href={`/unit/${unitId}`}
-                className="rounded-lg border border-border bg-white px-5 py-2.5 font-heading text-sm font-semibold text-forest shadow-sm transition-all hover:bg-chalk hover:shadow-md"
-              >
-                Save for Later
-              </Link>
-              <Link
-                href={`/unit/${unitId}/publish`}
-                className="rounded-lg bg-forest px-6 py-2.5 font-heading text-sm font-semibold text-white shadow-sm transition-all hover:bg-forest-light hover:shadow-md"
-              >
-                Go Live &rarr;
-              </Link>
-            </div>
+            <Link
+              href={`/unit/${unitId}`}
+              className="rounded-lg bg-forest px-6 py-2.5 font-heading text-sm font-semibold text-white shadow-sm transition-all hover:bg-forest-light hover:shadow-md"
+            >
+              Complete Plan &rarr;
+            </Link>
           )}
         </div>
       </PageContainer>
