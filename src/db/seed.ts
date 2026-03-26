@@ -1,7 +1,7 @@
 /**
  * Seed script for Backward Builder — UbD Curriculum Design Tool
  *
- * Creates a demo teacher "Mrs. Crabapple" with two complete units,
+ * Creates a demo teacher "Ms. Jones" with two complete units,
  * including student submissions with realistic score distributions.
  *
  * Run with: npx tsx src/db/seed.ts
@@ -745,7 +745,7 @@ async function seed() {
       SELECT ss.id FROM student_submissions ss
       JOIN units u ON ss.unit_id = u.id
       JOIN teachers t ON u.teacher_id = t.id
-      WHERE t.is_demo = true OR t.session_id = 'demo-mrs-crabapple'
+      WHERE t.is_demo = true OR t.session_id = 'demo-ms-jones'
     )
   `;
 
@@ -754,7 +754,7 @@ async function seed() {
     WHERE unit_id IN (
       SELECT u.id FROM units u
       JOIN teachers t ON u.teacher_id = t.id
-      WHERE t.is_demo = true OR t.session_id = 'demo-mrs-crabapple'
+      WHERE t.is_demo = true OR t.session_id = 'demo-ms-jones'
     )
   `;
 
@@ -764,7 +764,7 @@ async function seed() {
       SELECT c.id FROM checks_for_understanding c
       JOIN units u ON c.unit_id = u.id
       JOIN teachers t ON u.teacher_id = t.id
-      WHERE t.is_demo = true OR t.session_id = 'demo-mrs-crabapple'
+      WHERE t.is_demo = true OR t.session_id = 'demo-ms-jones'
     )
   `;
 
@@ -773,7 +773,7 @@ async function seed() {
     WHERE unit_id IN (
       SELECT u.id FROM units u
       JOIN teachers t ON u.teacher_id = t.id
-      WHERE t.is_demo = true OR t.session_id = 'demo-mrs-crabapple'
+      WHERE t.is_demo = true OR t.session_id = 'demo-ms-jones'
     )
   `;
 
@@ -782,7 +782,7 @@ async function seed() {
     WHERE unit_id IN (
       SELECT u.id FROM units u
       JOIN teachers t ON u.teacher_id = t.id
-      WHERE t.is_demo = true OR t.session_id = 'demo-mrs-crabapple'
+      WHERE t.is_demo = true OR t.session_id = 'demo-ms-jones'
     )
   `;
 
@@ -791,7 +791,7 @@ async function seed() {
     WHERE unit_id IN (
       SELECT u.id FROM units u
       JOIN teachers t ON u.teacher_id = t.id
-      WHERE t.is_demo = true OR t.session_id = 'demo-mrs-crabapple'
+      WHERE t.is_demo = true OR t.session_id = 'demo-ms-jones'
     )
   `;
 
@@ -799,13 +799,13 @@ async function seed() {
     DELETE FROM units
     WHERE teacher_id IN (
       SELECT id FROM teachers
-      WHERE is_demo = true OR session_id = 'demo-mrs-crabapple'
+      WHERE is_demo = true OR session_id = 'demo-ms-jones'
     )
   `;
 
   await sql`
     DELETE FROM teachers
-    WHERE is_demo = true OR session_id = 'demo-mrs-crabapple'
+    WHERE is_demo = true OR session_id = 'demo-ms-jones'
   `;
 
   console.log("   Done.\n");
@@ -813,15 +813,15 @@ async function seed() {
   // -----------------------------------------------------------------------
   // Step 1: Create demo teacher
   // -----------------------------------------------------------------------
-  console.log("2. Creating Mrs. Crabapple (demo teacher)...");
+  console.log("2. Creating Ms. Jones (demo teacher)...");
 
   await sql`
     INSERT INTO teachers (id, session_id, email, display_name, grade_level, subject, state, standards_framework, is_demo)
     VALUES (
       ${TEACHER_ID},
-      'demo-mrs-crabapple',
-      'crabapple@demo.backwardbuilder.com',
-      'Mrs. Crabapple',
+      'demo-ms-jones',
+      'jones@demo.backwardbuilder.com',
+      'Ms. Jones',
       '7th Grade',
       'Science',
       'Missouri',
@@ -1185,13 +1185,13 @@ async function seed() {
   // -----------------------------------------------------------------------
   console.log("=== Seed Complete ===\n");
   console.log("Created:");
-  console.log("  - 1 demo teacher (Mrs. Crabapple)");
+  console.log("  - 1 demo teacher (Ms. Jones)");
   console.log("  - 2 units (Ecosystem Interdependence + Causes of the American Revolution)");
   console.log("  - 2 performance tasks (1 live + selected, 1 draft)");
   console.log("  - 2 checks for understanding (both live, 9 questions total)");
   console.log("  - 7 learning activities");
   console.log("  - 15 student submissions with 75 individual answers");
-  console.log("\nDemo login: session_id = 'demo-mrs-crabapple'");
+  console.log("\nDemo login: session_id = 'demo-ms-jones'");
   console.log("Share codes: ystone, fwchk1, dtchk2");
 }
 

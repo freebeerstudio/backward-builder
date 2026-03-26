@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { teachers } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
-const DEMO_SESSION_ID = "demo-mrs-crabapple";
+const DEMO_SESSION_ID = "demo-ms-jones";
 
 /**
  * GET /api/demo — Demo bypass for judges and visitors.
@@ -78,7 +78,7 @@ export async function POST() {
 
   const response = NextResponse.json({
     teacherId: demoTeacher.id,
-    displayName: demoTeacher.displayName || "Mrs. Crabapple",
+    displayName: demoTeacher.displayName || "Ms. Jones",
   });
 
   response.cookies.set("teacher_session", DEMO_SESSION_ID, {
