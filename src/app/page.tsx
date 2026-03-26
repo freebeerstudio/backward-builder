@@ -55,12 +55,6 @@ function guessSubjectLabel(eu: string, subject?: string | null): string {
 const FALLBACK_COMMUNITY_UNITS: UnitCardData[] = [
   { id: "c1", title: "Ecosystem Interdependence", description: "Trophic cascades and the Yellowstone wolf reintroduction", subject: "Science", grade: "7th", teacher: "Ms. Jones", initial: "J", uses: 142, color: "var(--color-subj-science)", href: "/unit/00000000-0000-0000-0000-000000000010" },
   { id: "c2", title: "Causes of the American Revolution", description: "Economic, political, and ideological tensions leading to independence", subject: "History", grade: "8th", teacher: "Mr. Rodriguez", initial: "R", uses: 98, color: "var(--color-subj-history)", href: "/unit/00000000-0000-0000-0000-000000000020" },
-  { id: "c3", title: "Persuasive Writing & Rhetoric", description: "Analyzing persuasion techniques across speeches and editorials", subject: "ELA", grade: "6th", teacher: "Ms. Chen", initial: "J", uses: 217, color: "var(--color-subj-ela)", href: "#" },
-  { id: "c4", title: "Fractions in the Real World", description: "Applying fraction operations to cooking, construction, and design", subject: "Math", grade: "5th", teacher: "Mr. Thompson", initial: "T", uses: 63, color: "var(--color-subj-math)", href: "#" },
-  { id: "c5", title: "The Water Cycle as a System", description: "Solar energy, evaporation, condensation, and human impact", subject: "Science", grade: "5th", teacher: "Mrs. Johnson", initial: "J", uses: 184, color: "var(--color-subj-science)", href: "#" },
-  { id: "c6", title: "Ancient Civilizations", description: "How geography shaped social, political, and economic development", subject: "History", grade: "6th", teacher: "Ms. Patel", initial: "P", uses: 311, color: "var(--color-subj-history)", href: "#" },
-  { id: "c7", title: "Poetry, Voice & Identity", description: "How poets use language, form, and structure to express perspective", subject: "ELA", grade: "8th", teacher: "Mr. Davis", initial: "D", uses: 76, color: "var(--color-subj-ela)", href: "#" },
-  { id: "c8", title: "Geometric Transformations", description: "Translations, rotations, reflections, and real-world symmetry", subject: "Math", grade: "7th", teacher: "Mrs. Kim", initial: "K", uses: 129, color: "var(--color-subj-math)", href: "#" },
 ];
 
 

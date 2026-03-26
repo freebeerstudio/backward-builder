@@ -9,6 +9,7 @@ import { ButterflyLogo } from "@/components/ui/ButterflyLogo";
 type RoadmapItem = {
   title: string;
   description: string;
+  link?: string;
 };
 
 const SHIPPED: RoadmapItem[] = [
@@ -27,7 +28,13 @@ const SHIPPED: RoadmapItem[] = [
   { title: "Demo Account", description: "Explore sample units without creating an account" },
 ];
 
-const IN_PROGRESS: RoadmapItem[] = [];
+const IN_PROGRESS: RoadmapItem[] = [
+  { title: "Validate MVP with Teachers", description: "Gathering feedback from real classroom teachers to identify the highest-impact improvements before wider release" },
+  { title: "Vibeathon Judge Review", description: "Submitted for evaluation in the Codefi Vibeathon 2026 — Vibe the Gap Challenge" },
+  { title: "Red Team & Security Audit", description: "Systematic testing of all user flows, edge cases, and security boundaries to ensure production readiness" },
+  { title: "Clean Up & Document Codebase", description: "Ensuring clean GitHub repo, comprehensive documentation, and well-structured code for open collaboration" },
+  { title: "Building in Public", description: "Documenting the journey of building Backward Builder — read Hugh Mann's reflections on the process", link: "https://hughmann.life/2026-03-25-the-anonymous-gift.html" },
+];
 
 const PLANNED: RoadmapItem[] = [
   { title: "Paced Unit Delivery", description: "Go live with one check or performance task at a time — control the pacing of your unit in real time, with separate results for each assessment as students complete them" },
@@ -82,6 +89,11 @@ function RoadmapSection({
             >
               <h3 className="font-display text-base font-semibold text-ink">{item.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-pencil">{item.description}</p>
+              {item.link && (
+                <a href={item.link} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-forest hover:underline">
+                  Read more &rarr;
+                </a>
+              )}
             </div>
           ))}
         </div>
@@ -143,7 +155,7 @@ export default function RoadmapPage() {
         <RoadmapSection
           icon="🔨"
           title="In Progress"
-          subtitle="Currently being built — coming soon"
+          subtitle="Actively being worked on right now"
           items={IN_PROGRESS}
           cardBorder="border-gold/40"
         />

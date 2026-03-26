@@ -372,7 +372,7 @@ function UnitOverview({ unit, hasTasks, hasChecks, hasActivities, isOwner = true
                 {authorName ? `Shared by ${authorName}` : "Community Unit"}
               </p>
               <p className="font-ui text-xs text-pencil mt-0.5">
-                You&apos;re viewing a shared unit. Remixing and copying are coming soon!
+                You&apos;re viewing a shared unit. Explore the design and use it as inspiration for your own.
               </p>
             </div>
           </div>
