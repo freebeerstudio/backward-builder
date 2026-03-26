@@ -26,14 +26,14 @@ const SHIPPED: RoadmapItem[] = [
   { title: "Community Library", description: "Publish units for other teachers to discover and learn from" },
   { title: "Quick-Start Prompts", description: "Common lesson templates for fast unit creation" },
   { title: "Demo Account", description: "Explore sample units without creating an account" },
+  { title: "Red Team & Security Audit", description: "Systematic testing of all user flows, edge cases, and security boundaries to ensure production readiness" },
+  { title: "Clean Up & Document Codebase", description: "Clean GitHub repo, comprehensive documentation, and well-structured code for open collaboration" },
+  { title: "Building in Public", description: "Documenting the journey of building Backward Builder — read Hugh Mann's reflections on the process", link: "https://hughmann.life/2026-03-25-the-anonymous-gift.html" },
 ];
 
 const IN_PROGRESS: RoadmapItem[] = [
   { title: "Validate MVP with Teachers", description: "Gathering feedback from real classroom teachers to identify the highest-impact improvements before wider release" },
   { title: "Vibeathon Judge Review", description: "Submitted for evaluation in the Codefi Vibeathon 2026 — Vibe the Gap Challenge" },
-  { title: "Red Team & Security Audit", description: "Systematic testing of all user flows, edge cases, and security boundaries to ensure production readiness" },
-  { title: "Clean Up & Document Codebase", description: "Ensuring clean GitHub repo, comprehensive documentation, and well-structured code for open collaboration" },
-  { title: "Building in Public", description: "Documenting the journey of building Backward Builder — read Hugh Mann's reflections on the process", link: "https://hughmann.life/2026-03-25-the-anonymous-gift.html" },
 ];
 
 const PLANNED: RoadmapItem[] = [
