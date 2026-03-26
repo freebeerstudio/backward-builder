@@ -177,10 +177,15 @@ export default function RoadmapPage() {
           </p>
           <a
             href="mailto:wayne@freebeer.ai"
+            target="_blank"
+            rel="noopener noreferrer"
             className="mt-6 inline-flex items-center gap-2 rounded-lg bg-ink px-6 py-3 font-ui text-sm font-semibold text-chalk shadow-sm transition hover:bg-ink-light"
           >
             Share Your Idea →
           </a>
+          <p className="mt-3 text-sm text-pencil">
+            <a href="mailto:wayne@freebeer.ai" target="_blank" rel="noopener noreferrer" className="font-medium text-ink underline hover:text-ink-light">wayne@freebeer.ai</a>
+          </p>
         </div>
       </main>
 
