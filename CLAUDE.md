@@ -109,3 +109,52 @@ Each stage feeds context to the next — this is a key differentiator:
 - `npm run db:push` — push schema to database
 - `npm run db:seed` — seed demo data (Ms. Jones)
 - `./scripts/prep-submission.sh` — prepare ZIP for contest submission
+
+## Audit (2026-04-24)
+
+_Written by Hugh Mann from Earnhardt audit comments. FRE-634._
+
+### ✅ What Works
+- Live deployment: https://backwardbuilder.com (200 OK on Vercel)
+- Core pages load: landing, roadmap, dashboard
+- Complete Next.js 14+ codebase with TypeScript, Tailwind CSS v4
+- Full 5-stage UbD pipeline architecture implemented
+- Database schema (Neon Postgres + Drizzle ORM) — comprehensive with enums
+- API routes: complete CRUD for units, tasks, checks, results
+- AI pipeline: Claude API integration for all stages (Stage 1–3 generation)
+- Student-facing check pages with share links and QR codes
+- Teacher dashboard with analytics (Stage 5)
+- Demo data seed script (Ms. Jones — 4 sample units)
+- Vercel deployment config ready
+
+### ⚠️ Current Issues
+- **Dependencies not installed** — `node_modules` missing, requires `npm install`
+- **Environment config needed** — `.env.local` must define `DATABASE_URL` and `ANTHROPIC_API_KEY`
+- **Database migration required** — run `npm run db:push` before first use
+- **No CI/CD** — no GitHub Actions, manual deployment only
+- **No test suite** — no unit, integration, or e2e tests
+- **Error handling thin** — development logs show minimal info, no Sentry/LogRocket
+- **No monitoring** — no analytics (PostHog/Plausible) or uptime monitoring
+
+### ❌ Missing for MVP
+MVP definition: _A teacher can sign up, create one UbD unit plan with AI assistance, and save it._
+
+1. **User auth** — signup/login flows exist but unverified end-to-end; cookie sessions may not persist correctly
+2. **Build verification** — `npm run build` has not been confirmed passing in this environment
+3. **E2E flow test** — `/setup` → Stage 1 → Stage 2 → Stage 3 → save needs manual verification
+4. **Payment integration** — no Stripe; required for commercial launch (not for MVP demo)
+5. **Email notifications** — no transactional email (Resend/SendGrid)
+
+### MVP Readiness
+| Component | Status |
+|---|---|
+| Architecture | ✅ Complete |
+| Core features (5-stage pipeline) | ✅ Implemented |
+| Dependencies | 🔄 Need `npm install` |
+| Environment config | 🔄 Need `.env.local` |
+| Database migration | 🔄 Need `npm run db:push` |
+| Build verification | 🔄 Unconfirmed |
+| Auth (demo teacher flow) | ⚠️ Implemented, unverified |
+| Deployment (Vercel) | ✅ Ready |
+
+**Overall: ~80% complete.** Solid architecture, needs operational setup + E2E verification before calling it MVP.
