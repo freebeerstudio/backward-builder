@@ -1,0 +1,64 @@
+# FBS Project Manifest — Backward Builder
+
+name: backward-builder
+display_name: Backward Builder
+type: app
+status: incubator
+owner: earnhardt
+description: |
+  AI-powered UbD (Understanding by Design) curriculum planning tool.
+  Vibeathon 2026 contest entry (placed 4th, $400 won).
+  MVP ~80% complete. Education sector product.
+
+# Infrastructure
+repo: freebeerstudio/backward-builder
+vercel_project_id: null  # TODO: extract from .vercel/project.json
+supabase_project_id: null
+linear_project: Backward Builder
+domain: backwardbuilder.com
+
+# Tech Stack
+framework: next.js
+language: typescript
+runtime: node
+design_system: "@freebeer/design-system@1.0.0"  # sub-brand: backward_builder (inherits FBS primitives, own color)
+
+# Environments
+environments:
+  dev:
+    url: localhost:3000
+  prod:
+    url: https://backwardbuilder.com
+    vercel_branch: main
+
+# Health
+health:
+  checks:
+    - type: http
+      url: https://backwardbuilder.com
+      expect: 200
+      interval: weekly
+
+# Dependencies
+tools:
+  - anthropic-api
+  - neon-postgres
+depends_on: []
+
+# Work
+prd: null  # TODO: link original Vibeathon brief
+linear_labels:
+  - "Backward Builder"
+tasks: []
+
+# Output
+artifacts: []
+
+# Metadata
+created: 2026-03-20
+last_reviewed: 2026-04-30
+notes: |
+  Database: Neon Postgres + Drizzle ORM (not Supabase).
+  Design: forest green (#2D5A3D), warm gold (#D4A843), warm off-white (#FAF8F5).
+  Key routes: /, /setup, /unit/new, /unit/[id], /dashboard.
+  Uses @anthropic-ai/sdk directly (API key cost, not Max plan).
