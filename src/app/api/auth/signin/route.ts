@@ -8,5 +8,5 @@ import { SIGN_IN_URL } from "@/lib/fbs-urls";
  * session. Nothing here can create or claim an account any more.
  */
 export async function POST() {
-  return NextResponse.json({ error: "Sign in moved to Free Beer Studio.", signInUrl: SIGN_IN_URL }, { status: 410 });
+  return NextResponse.json({ error: "Sign-in has moved. Reload this page and try again — one email, no password.", signInUrl: SIGN_IN_URL }, { status: 410 });
 }
