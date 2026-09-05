@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { teachers, units } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getSessionId } from "@/lib/teacher-session";
+import { SUBSCRIBE_URL } from "@/lib/fbs-urls";
 import { Header } from "@/components/layout/Header";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Card } from "@/components/ui/Card";
@@ -59,6 +60,9 @@ export default async function DashboardPage() {
 
   if (!teacher) {
     redirect("/");
+  }
+  if (!teacher.isDemo && !teacher.fbsAccess) {
+    redirect(SUBSCRIBE_URL);   // signed in at the studio, not subscribed
   }
 
   // Get all units for this teacher

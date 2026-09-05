@@ -7,6 +7,7 @@ import { HeroChatBox } from "@/components/landing/HeroChatBox";
 import { UnitTabs, type UnitCardData } from "@/components/landing/UnitTabs";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { ButterflyLogo } from "@/components/ui/ButterflyLogo";
+import { SUBSCRIBE_URL } from "@/lib/fbs-urls";
 
 /**
  * Landing page — single-page app with auth-aware layout.
@@ -67,6 +68,7 @@ export default async function Home() {
   const sessionId = cookieStore.get("teacher_session")?.value;
 
   let isAuthenticated = false;
+  let needsSubscription = false;   // signed in through the studio, but no subscription and no Beer Bond
   let teacherName: string | null = null;
   let teacherInitial = "";
   let myUnits: UnitCardData[] = [];
@@ -80,7 +82,9 @@ export default async function Home() {
       .where(eq(teachers.sessionId, sessionId))
       .limit(1);
 
-    if (teacher) {
+    if (teacher && !teacher.isDemo && !teacher.fbsAccess) {
+      needsSubscription = true;    // the account exists at the studio; the tool is $15/mo
+    } else if (teacher) {
       isAuthenticated = true;
       teacherName = teacher.displayName || "Teacher";
       teacherInitial = (teacherName?.[0] || "T").toUpperCase();
@@ -183,6 +187,18 @@ export default async function Home() {
         teacherName={teacherName}
         teacherInitial={teacherInitial}
       />
+      {needsSubscription && (
+        <div className="border-b border-ruled bg-chalk">
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
+            <p className="font-ui text-sm text-graphite">
+              You&rsquo;re signed in, but Backward Builder isn&rsquo;t active on this account yet — it&rsquo;s $15 a month, cancel any time.
+            </p>
+            <a href={SUBSCRIBE_URL} className="focus-ring inline-flex items-center rounded-lg bg-ink px-4 py-2 font-ui text-sm font-semibold text-white shadow-sm transition hover:bg-ink-light">
+              Subscribe — $15/month
+            </a>
+          </div>
+        </div>
+      )}
 
       {/* ===================== HERO ===================== */}
       <section className="hero-gradient dot-grid relative overflow-visible px-4 pb-12 pt-16 sm:px-6 sm:pb-16 sm:pt-24">

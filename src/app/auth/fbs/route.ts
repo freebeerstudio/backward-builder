@@ -3,14 +3,16 @@ import { cookies } from "next/headers";
 import { db } from "@/db";
 import { teachers } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { verifyFbsGrant, SIGN_IN_URL } from "@/lib/fbs";
+import { verifyFbsGrant, SIGN_IN_URL, SUBSCRIBE_URL } from "@/lib/fbs";
 
 /**
  * GET /auth/fbs?fbs_grant=<token> — where the studio's sign-in lands.
  *
  * Verify the grant, find the teacher by email or create one, cache the
  * studio's access answer, set our session cookie, and go home with the token
- * stripped from the URL. A bad or expired grant goes back to the sign-in page.
+ * stripped from the URL. No access (no subscription, no Beer Bond) → the
+ * studio's checkout, straight away: signing up IS subscribing (Wayne, 2026-09-05).
+ * A bad or expired grant goes back to the sign-in page.
  */
 export const dynamic = "force-dynamic";
 
@@ -43,5 +45,6 @@ export async function GET(request: Request) {
     maxAge: 60 * 60 * 24 * 365,
     path: "/",
   });
+  if (!grant.access) return NextResponse.redirect(SUBSCRIBE_URL);
   return NextResponse.redirect(new URL("/", request.url));
 }
