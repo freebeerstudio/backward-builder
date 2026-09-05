@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const grant = verifyFbsGrant(url.searchParams.get("fbs_grant") ?? "");
-  if (!grant) return NextResponse.redirect(`${SIGN_IN_URL}?expired=1`);
+  if (!grant) return NextResponse.redirect(new URL(`${SIGN_IN_URL}?expired=1`, request.url));
 
   const email = grant.sub;
   let [teacher] = await db.select({ id: teachers.id, sessionId: teachers.sessionId }).from(teachers).where(eq(teachers.email, email)).limit(1);
@@ -45,6 +45,6 @@ export async function GET(request: Request) {
     maxAge: 60 * 60 * 24 * 365,
     path: "/",
   });
-  if (!grant.access) return NextResponse.redirect(SUBSCRIBE_URL);
+  if (!grant.access) return NextResponse.redirect(new URL(SUBSCRIBE_URL, request.url));
   return NextResponse.redirect(new URL("/", request.url));
 }

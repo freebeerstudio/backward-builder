@@ -16,6 +16,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
     "@neondatabase/serverless": "^1.0.2",
+    "@stripe/stripe-js": "^9.15.0",
     "@types/qrcode": "^1.5.6",
     "drizzle-orm": "^0.45.1",
     "nanoid": "^5.1.7",
