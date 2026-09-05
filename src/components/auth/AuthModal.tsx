@@ -26,7 +26,11 @@ export function AuthModal({ isOpen, initialMode, onClose }: AuthModalProps) {
   }, [isOpen, onClose]);
 
   const [mode, setMode] = useState<Mode>(initialMode ?? "signup");
-  useEffect(() => { if (initialMode) setMode(initialMode); }, [initialMode]);
+  const [seenInitial, setSeenInitial] = useState(initialMode);
+  if (initialMode !== seenInitial) {            // parent switched modes: follow it (state adjusted during render, no effect)
+    setSeenInitial(initialMode);
+    setMode(initialMode ?? "signup");
+  }
   if (!isOpen) return null;
   const signingUp = mode !== "signin";
 
