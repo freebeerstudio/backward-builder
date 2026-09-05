@@ -59,10 +59,15 @@ export function SubscribeForm({ email: initialEmail }: { email: string | null })
         setAmount(cfg.amountUsd);
         const elements = stripe.elements({
           mode: "subscription", amount: cfg.amountUsd * 100, currency: cfg.currency,
+          paymentMethodTypes: ["card"],            // card only: no wallet tabs, no Link block — one quiet form
           appearance: APPEARANCE, fonts: FONTS,
         });
         elementsRef.current = elements;
-        const payment = elements.create("payment", { layout: "tabs" });
+        const payment = elements.create("payment", {
+          layout: { type: "accordion", radios: false, spacedAccordionItems: false },
+          fields: { billingDetails: { email: "never", address: { country: "never" } } },   // our email field; US teachers
+          wallets: { applePay: "never", googlePay: "never", link: "never" },
+        });
         if (mountRef.current) payment.mount(mountRef.current);
         payment.on("ready", () => setReady(true));
       } catch (err) {
@@ -92,7 +97,7 @@ export function SubscribeForm({ email: initialEmail }: { email: string | null })
         elements, clientSecret, redirect: "if_required",
         confirmParams: {
           return_url: `${window.location.origin}/subscribe/thanks?subscription_id=${encodeURIComponent(subscriptionId)}`,
-          payment_method_data: { billing_details: { email: email.trim() } },
+          payment_method_data: { billing_details: { email: email.trim(), address: { country: "US" } } },
         },
       });
       if (payErr) throw new Error(payErr.message ?? "The payment didn't go through.");
