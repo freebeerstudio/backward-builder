@@ -1,35 +1,35 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { OPEN_URL, PRODUCT, STUDIO_LOGIN_API, STUDIO_SUBSCRIBE_STATUS_API } from "@/lib/fbs-urls";
+import { OPEN_URL, PRODUCT, STUDIO_LOGIN_API, STUDIO_SUBSCRIBE_COMPLETE_API } from "@/lib/fbs-urls";
 
 /**
  * After the payment: wait for the studio's webhook to write the subscription
  * (usually seconds), then walk through the studio's access door into the app.
  * If it takes too long, offer the email link instead.
  */
-export function SubscribeThanks({ sessionId }: { sessionId: string }) {
-  const [phase, setPhase] = useState<"waiting" | "ready" | "slow" | "sent" | "none">(sessionId ? "waiting" : "none");
+export function SubscribeThanks({ subscriptionId }: { subscriptionId: string }) {
+  const [phase, setPhase] = useState<"waiting" | "ready" | "slow" | "sent" | "none">(subscriptionId ? "waiting" : "none");
   const [email, setEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!sessionId) return;
+    if (!subscriptionId) return;
     let tries = 0, stop = false;
     const tick = async () => {
       if (stop) return;
       tries++;
       try {
-        const res = await fetch(STUDIO_SUBSCRIBE_STATUS_API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ session_id: sessionId }) });
+        const res = await fetch(STUDIO_SUBSCRIBE_COMPLETE_API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ subscriptionId }) });
         const s = await res.json();
         if (s.email) setEmail(s.email);
-        if (s.fulfilled) { setPhase("ready"); window.location.href = OPEN_URL; return; }
+        if (s.grant) { setPhase("ready"); window.location.href = `/auth/fbs?fbs_grant=${encodeURIComponent(s.grant)}`; return; }
       } catch { /* keep trying */ }
       if (tries >= 20) { setPhase("slow"); return; }
       setTimeout(tick, 2500);
     };
     tick();
     return () => { stop = true; };
-  }, [sessionId]);
+  }, [subscriptionId]);
 
   async function sendLink() {
     if (!email) return;

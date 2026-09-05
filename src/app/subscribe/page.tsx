@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Header } from "@/components/layout/Header";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Card } from "@/components/ui/Card";
-import { EmbeddedSubscribe } from "@/components/auth/EmbeddedSubscribe";
+import { SubscribeForm } from "@/components/auth/SubscribeForm";
 import { getAuthenticatedTeacher } from "@/lib/auth";
 import { db } from "@/db";
 import { teachers } from "@/db/schema";
@@ -31,7 +31,8 @@ export default async function SubscribePage() {
       <PageContainer wide className="py-12 sm:py-16">
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
           <div>
-            <h1 className="font-display text-3xl font-semibold text-ink sm:text-4xl">Backward Builder is $15 a month.</h1>
+            <h1 className="font-display text-3xl font-semibold text-ink sm:text-4xl">Create your account.</h1>
+            <p className="mt-2 font-ui text-lg text-graphite">$15 a month. Cancel any time.</p>
             <p className="mt-4 font-ui text-base leading-relaxed text-graphite">
               Every unit you design, every check for understanding, every results dashboard — for less
               than a planning-period coffee habit. Cancel any time; you keep what you built.
@@ -44,11 +45,11 @@ export default async function SubscribePage() {
             </ul>
             <p className="mt-6 font-ui text-sm text-pencil">
               {email ? <>Billing for <span className="text-ink">{email}</span>. </> : null}
-              Have a Free Beer Studio Beer Bond? Backward Builder is already included — sign in with that email instead.
+              Already have an account, or a Free Beer Studio Beer Bond? <a href="/signin" className="underline">Sign in</a> — Backward Builder is included with a bond.
             </p>
           </div>
           <Card>
-            <EmbeddedSubscribe email={email} />
+            <SubscribeForm email={email} />
           </Card>
         </div>
       </PageContainer>

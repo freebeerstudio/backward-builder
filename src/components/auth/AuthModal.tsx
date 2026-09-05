@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { SignInForm } from "@/components/auth/SignInForm";
 
 type Mode = "signup" | "signin";
@@ -25,8 +25,10 @@ export function AuthModal({ isOpen, initialMode, onClose }: AuthModalProps) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
+  const [mode, setMode] = useState<Mode>(initialMode ?? "signup");
+  useEffect(() => { if (initialMode) setMode(initialMode); }, [initialMode]);
   if (!isOpen) return null;
-  const signingUp = initialMode !== "signin";
+  const signingUp = mode !== "signin";
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="auth-title">
@@ -37,12 +39,21 @@ export function AuthModal({ isOpen, initialMode, onClose }: AuthModalProps) {
               {signingUp ? "Create your account" : "Sign in"}
             </h2>
             <p className="mt-1 font-ui text-sm text-pencil">
-              {signingUp ? "$15 a month, cancel any time. Start with your email." : "We’ll email you a link."}
+              {signingUp ? "$15 a month, cancel any time. Email and card on one page — you’re in the moment it clears." : "We’ll email you a link."}
             </p>
           </div>
           <button onClick={onClose} type="button" aria-label="Close" className="focus-ring rounded-md px-2 py-1 text-pencil hover:text-ink">✕</button>
         </div>
-        <SignInForm compact />
+        {signingUp ? (
+          <a href="/subscribe" className="focus-ring inline-flex w-full items-center justify-center rounded-lg bg-ink px-4 py-3 font-ui text-sm font-semibold text-white shadow-sm transition hover:bg-ink-light">
+            Sign up — $15/month
+          </a>
+        ) : (
+          <SignInForm compact />
+        )}
+        <button type="button" onClick={() => setMode(signingUp ? "signin" : "signup")} className="focus-ring mt-3 w-full rounded-lg px-3 py-2 font-ui text-sm text-pencil hover:text-ink">
+          {signingUp ? "Already have an account? Sign in" : "New here? Create your account"}
+        </button>
         <a href="/api/demo" className="focus-ring mt-4 inline-flex w-full items-center justify-center rounded-lg px-4 py-2.5 font-ui text-sm font-medium text-pencil transition hover:bg-chalk hover:text-graphite">
           Or try the demo first
         </a>

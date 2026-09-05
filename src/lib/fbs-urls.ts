@@ -15,3 +15,6 @@ export const STUDIO_SUBSCRIBE_SESSION_API = `${STUDIO}/api/subscribe/session`;
 export const STUDIO_SUBSCRIBE_STATUS_API = `${STUDIO}/api/subscribe/status`;
 /** After a paid subscription: the studio's access door, back to our callback. */
 export const OPEN_URL = `${STUDIO}/access?product=${PRODUCT}&return=${encodeURIComponent("https://backwardbuilder.com/auth/fbs")}`;
+export const STUDIO_SUBSCRIBE_CONFIG_API = `${STUDIO}/api/subscribe/config?product=${PRODUCT}`;
+export const STUDIO_SUBSCRIBE_START_API = `${STUDIO}/api/subscribe/start`;
+export const STUDIO_SUBSCRIBE_COMPLETE_API = `${STUDIO}/api/subscribe/complete`;

@@ -153,12 +153,12 @@ export function LandingHeader({ isAuthenticated: serverAuth, teacherName: server
               >
                 Sign in
               </button>
-              <button
-                onClick={() => { setAuthMode("signup"); setShowAuthModal(true); }}
+              <Link
+                href="/subscribe"
                 className="focus-ring rounded-lg bg-ink px-4 py-2 font-ui text-sm font-semibold text-white shadow-sm transition hover:bg-ink-light"
               >
                 Sign up
-              </button>
+              </Link>
             </div>
           )}
         </nav>
