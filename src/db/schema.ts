@@ -63,6 +63,14 @@ export const teachers = pgTable("teachers", {
   standardsFramework: varchar("standards_framework", { length: 100 }),
   isDemo: boolean("is_demo").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  // Free Beer Studio is the login (2026-09-04): a teacher signs in at
+  // freebeer.ai/sign-in/backward-builder and arrives at /auth/fbs with a grant.
+  // These cache the studio's answer to "does this email have access?" — a
+  // subscription or a Beer Bond — refreshed daily through the studio's check.
+  fbsAccess: boolean("fbs_access").default(false).notNull(),
+  fbsVia: varchar("fbs_via", { length: 64 }),          // '*' (bond) or 'backward-builder' (subscription)
+  fbsBond: integer("fbs_bond"),
+  fbsCheckedAt: timestamp("fbs_checked_at"),
 });
 
 /**

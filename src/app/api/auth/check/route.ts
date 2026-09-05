@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { db } from "@/db";
 import { teachers } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { getAuthenticatedTeacher } from "@/lib/auth";
 
 /**
  * GET /api/auth/check — Check if the current user is authenticated.
@@ -36,8 +37,10 @@ export async function GET() {
     });
   }
 
+  const auth = await getAuthenticatedTeacher();   // also refreshes the studio's access answer once a day
   return NextResponse.json({
     authenticated: true,
+    access: auth.authenticated ? auth.access : false,
     teacherId: teacher.id,
     displayName: teacher.displayName,
     email: teacher.email,

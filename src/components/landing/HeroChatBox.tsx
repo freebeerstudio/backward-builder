@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AuthModal } from "@/components/auth/AuthModal";
+import { SUBSCRIBE_URL } from "@/lib/fbs-urls";
 import { HoverSelect } from "@/components/ui/HoverSelect";
 
 const GRADES = [
@@ -181,6 +182,10 @@ export function HeroChatBox() {
       });
       if (!unitRes.ok) {
         const data = await unitRes.json().catch(() => ({}));
+        if (unitRes.status === 402) {            // signed in, not subscribed: the studio's checkout
+          window.location.href = data.subscribeUrl || SUBSCRIBE_URL;
+          return;
+        }
         throw new Error(data.error || "Failed to create unit");
       }
 
@@ -211,6 +216,10 @@ export function HeroChatBox() {
         setIsAuthenticated(data.authenticated);
         if (!data.authenticated) {
           setShowAuthModal(true);
+          return;
+        }
+        if (data.access === false) {              // signed in, not subscribed
+          window.location.href = SUBSCRIBE_URL;
           return;
         }
       } catch {

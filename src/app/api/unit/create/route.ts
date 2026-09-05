@@ -6,6 +6,7 @@ import { getSessionId } from "@/lib/teacher-session";
 import { analyzeUnderstanding } from "@/lib/claude";
 import { validateStandardCodes } from "@/lib/standards";
 import { getAuthenticatedTeacher } from "@/lib/auth";
+import { SUBSCRIBE_URL } from "@/lib/fbs-urls";
 
 /**
  * POST /api/unit/create — Create a new unit from an enduring understanding.
@@ -18,6 +19,10 @@ export async function POST(request: Request) {
     const auth = await getAuthenticatedTeacher();
     if (!auth.authenticated) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+    // Signed in but not subscribed (and no Beer Bond): the studio's checkout is the door.
+    if (!auth.access) {
+      return NextResponse.json({ error: "Backward Builder is $15 a month.", subscribeUrl: SUBSCRIBE_URL }, { status: 402 });
     }
 
     const { enduringUnderstanding } = await request.json();

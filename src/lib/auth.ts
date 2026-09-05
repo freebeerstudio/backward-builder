@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { db } from "@/db";
 import { teachers, units } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { checkFbsAccess } from "@/lib/fbs";
 
 /**
  * Shared authentication utilities for API routes and server components.
@@ -21,7 +22,11 @@ interface AuthenticatedResult {
   teacherId: string;
   sessionId: string;
   displayName: string | null;
+  /** May this teacher use the tool? Demo teachers always; others when the studio says so (subscription or Beer Bond). */
+  access: boolean;
 }
+
+const REFRESH_MS = 24 * 60 * 60 * 1000;
 
 /**
  * Get the current authenticated teacher from the session cookie.
@@ -40,6 +45,10 @@ export async function getAuthenticatedTeacher(): Promise<AuthenticatedResult | A
       id: teachers.id,
       sessionId: teachers.sessionId,
       displayName: teachers.displayName,
+      email: teachers.email,
+      isDemo: teachers.isDemo,
+      fbsAccess: teachers.fbsAccess,
+      fbsCheckedAt: teachers.fbsCheckedAt,
     })
     .from(teachers)
     .where(eq(teachers.sessionId, sessionId))
@@ -49,11 +58,30 @@ export async function getAuthenticatedTeacher(): Promise<AuthenticatedResult | A
     return { authenticated: false };
   }
 
+  // Once a day, ask the studio again — a lapsed subscription or a refund
+  // reaches us without a redirect. If the studio can't be reached, the cached
+  // answer stands.
+  let access = !!teacher.fbsAccess;
+  if (!teacher.isDemo && teacher.email) {
+    const stale = !teacher.fbsCheckedAt || Date.now() - teacher.fbsCheckedAt.getTime() > REFRESH_MS;
+    if (stale) {
+      const fresh = await checkFbsAccess(teacher.email);
+      if (fresh) {
+        access = fresh.access;
+        await db
+          .update(teachers)
+          .set({ fbsAccess: fresh.access, fbsVia: fresh.via, fbsBond: fresh.bond_number, fbsCheckedAt: new Date() })
+          .where(eq(teachers.id, teacher.id));
+      }
+    }
+  }
+
   return {
     authenticated: true,
     teacherId: teacher.id,
     sessionId: teacher.sessionId,
     displayName: teacher.displayName,
+    access: !!teacher.isDemo || access,
   };
 }
 
