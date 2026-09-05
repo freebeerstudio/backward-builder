@@ -64,7 +64,7 @@ export function SubscribeForm({ email: initialEmail }: { email: string | null })
         });
         elementsRef.current = elements;
         const payment = elements.create("payment", {
-          layout: { type: "accordion", radios: false, spacedAccordionItems: false },
+          layout: "accordion",
           fields: { billingDetails: { email: "never", address: { country: "never" } } },   // our email field; US teachers
           wallets: { applePay: "never", googlePay: "never", link: "never" },
         });
